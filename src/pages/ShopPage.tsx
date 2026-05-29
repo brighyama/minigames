@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../lib/toast'
-import { themes, type Theme } from '../lib/themes'
+import { themes } from '../lib/themes'
+import { cardDecks, type CardDeck } from '../lib/cardDecks'
 import { RarityIcon, rarityLabel } from '../components/RarityIcon'
+import { BackButton } from '../components/BackButton'
 
 type Props = {
   unlocks: string[]
@@ -18,8 +19,9 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const lockedThemes = themes.filter((t) => t.locked)
+  const lockedDecks = cardDecks.filter((d) => d.locked)
 
-  const purchase = async (theme: Theme) => {
+  const purchase = async (item: { id: string; name: string; cost?: number }) => {
     if (!supabase) {
       toast.show('Auth is not configured.', { tone: 'error' })
       return
@@ -28,10 +30,10 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
       toast.show('Sign in to make purchases.', { tone: 'error' })
       return
     }
-    const cost = theme.cost ?? 0
+    const cost = item.cost ?? 0
     if (cost <= 0) return
 
-    setBusyId(theme.id)
+    setBusyId(item.id)
     const { data: success, error } = await supabase.rpc('spend_points', { amount: cost })
     setBusyId(null)
 
@@ -43,15 +45,15 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
       toast.show('Not enough points.', { tone: 'error' })
       return
     }
-    onUnlock(theme.id)
+    onUnlock(item.id)
     window.dispatchEvent(new CustomEvent('points-changed'))
-    toast.show(`Unlocked: ${theme.name}`, { tone: 'success' })
+    toast.show(`Unlocked: ${item.name}`, { tone: 'success' })
   }
 
   return (
     <main className="container">
+      <BackButton />
       <header className="hero hero-compact">
-        <Link to="/" className="back-link">← Back</Link>
         <h1 className="title title-md">Shop</h1>
         <p className="subtitle">Spend points to unlock cosmetics and collectibles.</p>
       </header>
@@ -127,6 +129,100 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
           })}
         </div>
       </section>
+
+      <section className="shop-section" aria-labelledby="shop-decks-heading">
+        <header className="shop-section-header">
+          <h2 id="shop-decks-heading" className="shop-section-title">Card decks</h2>
+          <span className="shop-section-meta">
+            {lockedDecks.length} available
+          </span>
+        </header>
+
+        <div className="shop-grid">
+          {lockedDecks.map((deck) => {
+            const owned = unlocks.includes(deck.id)
+            const cost = deck.cost ?? 0
+            const canAfford = points !== null && points >= cost
+            const busy = busyId === deck.id
+            const rarityClass = deck.rarity ? `rarity-${deck.rarity}` : ''
+
+            return (
+              <article key={deck.id} className={`shop-card ${rarityClass}`}>
+                <div
+                  className="shop-card-preview shop-card-preview-deck"
+                  aria-hidden="true"
+                >
+                  <DeckPreviewCard deck={deck} offsetDeg={-12} />
+                  <DeckPreviewCard deck={deck} offsetDeg={0} />
+                  <DeckPreviewCard deck={deck} offsetDeg={12} />
+                </div>
+                <div className="shop-card-body">
+                  <div className="shop-card-head">
+                    <h3 className="shop-card-name">{deck.name}</h3>
+                    <div className="shop-card-tags">
+                      {deck.rarity && (
+                        <span
+                          className={`shop-card-rarity rarity-${deck.rarity}`}
+                          aria-label={rarityLabel(deck.rarity)}
+                          title={rarityLabel(deck.rarity)}
+                        >
+                          <RarityIcon rarity={deck.rarity} />
+                        </span>
+                      )}
+                      {owned ? (
+                        <span className="shop-card-tag shop-card-owned">Owned</span>
+                      ) : (
+                        <span className="shop-card-tag">{cost.toLocaleString()} pts</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {!owned && (
+                    <button
+                      type="button"
+                      className="shop-card-button"
+                      onClick={() => purchase(deck)}
+                      disabled={busy || !canAfford || !user}
+                    >
+                      {busy
+                        ? 'Buying…'
+                        : !user
+                          ? 'Sign in to buy'
+                          : !canAfford
+                            ? 'Not enough points'
+                            : `Buy for ${cost.toLocaleString()}`}
+                    </button>
+                  )}
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </section>
     </main>
+  )
+}
+
+function DeckPreviewCard({
+  deck,
+  offsetDeg,
+}: {
+  deck: CardDeck
+  offsetDeg: number
+}) {
+  return (
+    <div
+      className="shop-deck-card"
+      style={{
+        background: deck.face,
+        color: deck.red,
+        fontFamily: deck.font ?? 'Georgia, serif',
+        transform: `rotate(${offsetDeg}deg)`,
+        boxShadow: deck.border ? `inset 0 0 0 1px ${deck.border}` : undefined,
+      }}
+    >
+      <span className="shop-deck-card-corner">A</span>
+      <span className="shop-deck-card-suit">♥</span>
+    </div>
   )
 }

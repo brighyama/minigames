@@ -18,6 +18,8 @@ create table if not exists public.profiles (
   last_daily_claim    timestamptz,
   best_reaction_avg   int,                       -- lowest avg ms over 5; null = no record
   aim_high_score      int  not null default 0,   -- most circles in a 20s round
+  casino_net          bigint not null default 0, -- cumulative casino net (can be negative)
+  casino_biggest_win  int  not null default 0,   -- best single-round net win
   updated_at          timestamptz not null default now()
 );
 
@@ -28,6 +30,9 @@ alter table public.profiles add column if not exists lifetime_points    int  not
 alter table public.profiles add column if not exists last_daily_claim   timestamptz;
 alter table public.profiles add column if not exists best_reaction_avg  int;
 alter table public.profiles add column if not exists aim_high_score     int  not null default 0;
+-- Casino stats: cumulative net (can be negative) + best single-round win.
+alter table public.profiles add column if not exists casino_net         bigint not null default 0;
+alter table public.profiles add column if not exists casino_biggest_win int    not null default 0;
 
 alter table public.profiles enable row level security;
 
@@ -268,3 +273,166 @@ as $$
   limit lim;
 $$;
 grant execute on function public.get_leaderboard_aim(int) to anon, authenticated;
+
+-- ===========================================================================
+-- Casino (blackjack + roulette)
+-- ===========================================================================
+
+-- Gross return multiplier for a single roulette bet on a given winning number.
+-- Returns stake×(payout+1) factor: 0 = lost; 2 = even money (1:1); 3 = 2:1;
+-- 36 = straight up (35:1). Mirrors betDef() in src/games/roulette/lib.ts.
+create or replace function public.roulette_multiplier(bet_id text, winning int)
+returns int
+language plpgsql immutable
+set search_path = public
+as $$
+declare
+  reds int[] := array[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+  n int;
+begin
+  if bet_id like 's-%' then
+    n := substring(bet_id from 3)::int;
+    return case when n = winning then 36 else 0 end;
+  elsif bet_id = 'red' then
+    return case when winning = any(reds) then 2 else 0 end;
+  elsif bet_id = 'black' then
+    return case when winning <> 0 and not (winning = any(reds)) then 2 else 0 end;
+  elsif bet_id = 'even' then
+    return case when winning <> 0 and winning % 2 = 0 then 2 else 0 end;
+  elsif bet_id = 'odd' then
+    return case when winning % 2 = 1 then 2 else 0 end;
+  elsif bet_id = 'low' then
+    return case when winning between 1 and 18 then 2 else 0 end;
+  elsif bet_id = 'high' then
+    return case when winning between 19 and 36 then 2 else 0 end;
+  elsif bet_id = 'd-1' then
+    return case when winning between 1 and 12 then 3 else 0 end;
+  elsif bet_id = 'd-2' then
+    return case when winning between 13 and 24 then 3 else 0 end;
+  elsif bet_id = 'd-3' then
+    return case when winning between 25 and 36 then 3 else 0 end;
+  elsif bet_id = 'c-top' then
+    return case when winning <> 0 and winning % 3 = 0 then 3 else 0 end;
+  elsif bet_id = 'c-mid' then
+    return case when winning % 3 = 2 then 3 else 0 end;
+  elsif bet_id = 'c-bot' then
+    return case when winning % 3 = 1 then 3 else 0 end;
+  else
+    return 0;
+  end if;
+end;
+$$;
+
+-- Server-authoritative roulette spin. Takes the player's bets as a jsonb map
+-- of { bet_id: amount }, atomically deducts the total wager (failing if the
+-- balance is short), picks the winning number server-side, pays out, and
+-- records casino stats. The client animates the wheel to the returned number.
+create or replace function public.roulette_spin(bets jsonb)
+returns table (winning int, total_wagered int, total_return int, net int, new_points int)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  k text;
+  v int;
+  wag int := 0;
+  ret int := 0;
+  win int;
+  pts int;
+  net_change int;
+begin
+  -- Tally + validate the wager.
+  for k, v in select key, (value#>>'{}')::int from jsonb_each(bets) loop
+    if v is null or v <= 0 then
+      raise exception 'invalid bet amount for %', k;
+    end if;
+    wag := wag + v;
+  end loop;
+  if wag <= 0 then
+    raise exception 'no bets placed';
+  end if;
+
+  select points into pts from public.profiles where user_id = auth.uid();
+  if pts is null then
+    raise exception 'no profile';
+  end if;
+  if pts < wag then
+    raise exception 'insufficient points';
+  end if;
+
+  -- Server RNG owns the outcome.
+  win := floor(random() * 37)::int;
+
+  for k, v in select key, (value#>>'{}')::int from jsonb_each(bets) loop
+    ret := ret + v * public.roulette_multiplier(k, win);
+  end loop;
+
+  net_change := ret - wag;
+
+  update public.profiles
+     set points             = points - wag + ret,
+         -- Mirror spend_points (no lifetime change) + add_points(ret).
+         lifetime_points    = lifetime_points + ret,
+         casino_net         = casino_net + net_change,
+         casino_biggest_win = greatest(casino_biggest_win, net_change),
+         updated_at         = now()
+   where user_id = auth.uid()
+   returning points into pts;
+
+  return query select win, wag, ret, net_change, pts;
+end;
+$$;
+
+grant execute on function public.roulette_spin(jsonb) to authenticated;
+
+-- Record a casino round settled on the client (blackjack, hybrid model). Only
+-- updates the cumulative/best stats; the actual points move via add_points /
+-- spend_points. `net` may be negative.
+create or replace function public.record_casino_result(net int)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.profiles
+     set casino_net         = casino_net + net,
+         casino_biggest_win = greatest(casino_biggest_win, net),
+         updated_at         = now()
+   where user_id = auth.uid();
+end;
+$$;
+
+grant execute on function public.record_casino_result(int) to authenticated;
+
+-- Casino leaderboards (public-read, same shape as the others).
+create or replace function public.get_leaderboard_casino_win(lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.casino_biggest_win desc) as int) as rank,
+    p.username,
+    p.casino_biggest_win as score
+  from public.profiles p
+  where p.username is not null and p.casino_biggest_win > 0
+  order by p.casino_biggest_win desc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_casino_win(int) to anon, authenticated;
+
+create or replace function public.get_leaderboard_casino_net(lim int default 100)
+returns table (rank int, username text, score bigint)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.casino_net desc) as int) as rank,
+    p.username,
+    p.casino_net as score
+  from public.profiles p
+  where p.username is not null and p.casino_net <> 0
+  order by p.casino_net desc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_casino_net(int) to anon, authenticated;

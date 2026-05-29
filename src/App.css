@@ -261,6 +261,22 @@
   background: #ffffff;
 }
 
+/* Selected indicator: a large, semi-transparent checkmark over the tile. */
+.theme-option.is-selected::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  z-index: 2;
+  clip-path: var(--shape-octagon-sm);
+  background:
+    /* the checkmark glyph, drawn as an SVG data URI so we can size it freely */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 13l4 4L19 7' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 48% no-repeat,
+    rgba(0, 0, 0, 0.32);
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
 .theme-option.is-locked {
   cursor: not-allowed;
 }
@@ -277,7 +293,7 @@
 .theme-name {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -316,6 +332,10 @@
 
 /* ---------- Rarity glow (applies to sidebar tiles + shop cards) ---------- */
 
+.theme-option.rarity-green {
+  background: #44d17a;
+  filter: drop-shadow(0 0 8px rgba(68, 209, 122, 0.55));
+}
 .theme-option.rarity-blue {
   background: #4ea1ff;
   filter: drop-shadow(0 0 8px rgba(78, 161, 255, 0.6));
@@ -333,6 +353,7 @@
   filter: drop-shadow(0 0 10px rgba(255, 215, 100, 0.7));
 }
 
+.theme-option.rarity-green::before,
 .theme-option.rarity-blue::before,
 .theme-option.rarity-purple::before,
 .theme-option.rarity-red::before,
@@ -358,6 +379,7 @@
   filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.7));
 }
 
+.theme-rarity-badge.rarity-green  { color: #c5f5d4; }
 .theme-rarity-badge.rarity-blue   { color: #c1deff; }
 .theme-rarity-badge.rarity-purple { color: #e3c9ff; }
 .theme-rarity-badge.rarity-red    { color: #ffcaca; }
@@ -588,6 +610,22 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
+}
+
+/* Home page category section (e.g. Casino) below the main grid. */
+.home-section {
+  margin-top: 48px;
+}
+
+.home-section-title {
+  font-family: var(--theme-font, inherit);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--theme-text, #ffffff);
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .card {
@@ -870,19 +908,27 @@
   font-size: clamp(48px, 8vw, 96px);
 }
 
-.back-link {
-  display: inline-block;
-  margin-bottom: 20px;
+/* Universal exit/back button — fixed top-center on every non-home page.
+   Matches the former shop "Back" link: plain uppercase text, no pill. */
+.back-button {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+
   transition: color 0.2s ease;
 }
 
-.back-link:hover {
+.back-button:hover {
   color: #ffffff;
 }
 
@@ -1195,6 +1241,10 @@
   height: 13px;
 }
 
+.shop-card-rarity.rarity-green {
+  background: rgba(68, 209, 122, 0.22);
+  color: #c5f5d4;
+}
 .shop-card-rarity.rarity-blue {
   background: rgba(78, 161, 255, 0.22);
   color: #c1deff;
@@ -1213,6 +1263,11 @@
 }
 
 /* Rarity-tinted "border" + outer glow on shop cards */
+.shop-card.rarity-green {
+  background: linear-gradient(135deg, #6ee79d, #2faa56);
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
+          drop-shadow(0 0 16px rgba(68, 209, 122, 0.4));
+}
 .shop-card.rarity-blue {
   background: linear-gradient(135deg, #6db2ff, #2d7ce6);
   filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
@@ -1232,4 +1287,36 @@
   background: linear-gradient(135deg, #ffe18a, #ffac3a);
   filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
           drop-shadow(0 0 18px rgba(255, 215, 100, 0.55));
+}
+
+/* Card deck preview: three fanned mini-cards on the shop preview area */
+.shop-card-preview-deck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.shop-deck-card {
+  width: 56px;
+  height: 80px;
+  clip-path: var(--shape-octagon-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 8px;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.shop-deck-card-corner {
+  font-size: 14px;
+}
+
+.shop-deck-card-suit {
+  align-self: flex-end;
+  font-size: 22px;
 }

@@ -17,7 +17,7 @@ type Game = {
   placeholderGradient?: string
 }
 
-// Order in this array = order on the home grid.
+// Order in each array = order within that section on the home page.
 // Memory Match, Typing Race, and Snake are intentionally absent — they are
 // future ideas that haven't been built yet.
 const games: Game[] = [
@@ -42,6 +42,51 @@ const games: Game[] = [
   },
 ]
 
+// Wager-based games. Shown in their own "Casino" section below the rest.
+const casinoGames: Game[] = [
+  {
+    id: 'blackjack',
+    name: 'Blackjack',
+    path: '/games/blackjack',
+    placeholderGradient:
+      'radial-gradient(ellipse at 50% 40%, #1f7a4d 0%, #0c3a26 60%, #06140d 100%)',
+  },
+  {
+    id: 'roulette',
+    name: 'Roulette',
+    path: '/games/roulette',
+    placeholderGradient:
+      'radial-gradient(circle at 50% 45%, #b8862b 0%, #7a1f2b 45%, #1c0c10 100%)',
+  },
+]
+
+function GameCard({ game }: { game: Game }) {
+  const imageStyle = game.image
+    ? { backgroundImage: `url(${game.image})` }
+    : { background: game.placeholderGradient }
+
+  const inner = (
+    <>
+      <div className="card-image" style={imageStyle} aria-hidden="true">
+        {!game.path && <span className="card-badge">Coming Soon</span>}
+      </div>
+      <div className="card-footer">
+        <h2 className="card-title">{game.name}</h2>
+      </div>
+    </>
+  )
+
+  return game.path ? (
+    <Link to={game.path} className="card">
+      {inner}
+    </Link>
+  ) : (
+    <div className="card card-soon" aria-disabled="true">
+      {inner}
+    </div>
+  )
+}
+
 export function HomePage() {
   return (
     <main className="container">
@@ -51,32 +96,18 @@ export function HomePage() {
       </header>
 
       <section className="grid" aria-label="Games">
-        {games.map((game) => {
-          const imageStyle = game.image
-            ? { backgroundImage: `url(${game.image})` }
-            : { background: game.placeholderGradient }
+        {games.map((game) => (
+          <GameCard key={game.id} game={game} />
+        ))}
+      </section>
 
-          const inner = (
-            <>
-              <div className="card-image" style={imageStyle} aria-hidden="true">
-                {!game.path && <span className="card-badge">Coming Soon</span>}
-              </div>
-              <div className="card-footer">
-                <h2 className="card-title">{game.name}</h2>
-              </div>
-            </>
-          )
-
-          return game.path ? (
-            <Link key={game.id} to={game.path} className="card">
-              {inner}
-            </Link>
-          ) : (
-            <div key={game.id} className="card card-soon" aria-disabled="true">
-              {inner}
-            </div>
-          )
-        })}
+      <section className="home-section" aria-labelledby="casino-heading">
+        <h2 id="casino-heading" className="home-section-title">Casino</h2>
+        <div className="grid">
+          {casinoGames.map((game) => (
+            <GameCard key={game.id} game={game} />
+          ))}
+        </div>
       </section>
     </main>
   )

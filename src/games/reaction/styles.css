@@ -14,7 +14,8 @@
   color: #ffffff;
   font-family: var(--theme-font, inherit);
 
-  transition: background 0.12s ease;
+  /* No background transition: the waiting→ready flip must be instantaneous,
+     otherwise the eased color change inflates measured reaction time. */
 }
 
 .reaction-game:focus-visible {
@@ -100,11 +101,12 @@
   color: #ffffff;
 }
 
-/* Recent-times strip at the top of the game */
+/* Recent-times strip — pinned to the bottom so the top-center back button
+   has room. */
 
 .reaction-times-bar {
   position: absolute;
-  top: 24px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
@@ -169,31 +171,5 @@
 .reaction-times-avg-value {
   font-size: 20px;
   font-weight: 700;
-  color: #ffffff;
-}
-
-/* Exit button — re-usable for future games. */
-
-.game-exit {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 20;
-  padding: 9px 16px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(0, 0, 0, 0.3);
-  text-decoration: none;
-  clip-path: var(--shape-octagon-sm);
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.game-exit:hover {
-  background: rgba(0, 0, 0, 0.55);
   color: #ffffff;
 }

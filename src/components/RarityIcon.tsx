@@ -5,6 +5,13 @@ const STAR_PATH =
 
 const CROWN_PATH = 'M3 14L13 14L14 4L11 8L8 2L5 8L2 4Z'
 
+const STAR_COUNT: Record<Exclude<Rarity, 'gold'>, number> = {
+  green: 1,
+  blue: 2,
+  purple: 3,
+  red: 4,
+}
+
 export function RarityIcon({ rarity }: { rarity: Rarity }) {
   if (rarity === 'gold') {
     return (
@@ -18,7 +25,7 @@ export function RarityIcon({ rarity }: { rarity: Rarity }) {
       </svg>
     )
   }
-  const count = rarity === 'blue' ? 1 : rarity === 'purple' ? 2 : 3
+  const count = STAR_COUNT[rarity]
   return (
     <>
       {Array.from({ length: count }, (_, i) => (
@@ -38,6 +45,6 @@ export function RarityIcon({ rarity }: { rarity: Rarity }) {
 
 export function rarityLabel(rarity: Rarity): string {
   if (rarity === 'gold') return 'Exclusive'
-  const count = rarity === 'blue' ? 1 : rarity === 'purple' ? 2 : 3
+  const count = STAR_COUNT[rarity]
   return `${count} star${count > 1 ? 's' : ''}`
 }

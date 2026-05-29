@@ -8,6 +8,7 @@ import {
   DEFAULT_ACCENT_1,
   DEFAULT_ACCENT_2,
 } from './lib/themes'
+import { cardDecks } from './lib/cardDecks'
 import { AuthPanel } from './components/AuthPanel'
 import { DailyBonus } from './components/DailyBonus'
 import { RarityIcon, rarityLabel } from './components/RarityIcon'
@@ -16,8 +17,11 @@ import { LeaderboardsPage } from './pages/LeaderboardsPage'
 import { ShopPage } from './pages/ShopPage'
 import { ReactionGame } from './games/reaction/ReactionGame'
 import { AimGame } from './games/aim/AimGame'
+import { BlackjackGame } from './games/blackjack/BlackjackGame'
+import { RouletteGame } from './games/roulette/RouletteGame'
 
 const THEME_KEY = 'minigames:theme'
+const DECK_KEY = 'minigames:deck'
 const UNLOCKS_KEY = 'minigames:unlocks'
 
 function loadUnlocks(): string[] {
@@ -38,6 +42,9 @@ function App() {
   const [themeId, setThemeId] = useState<string>(() => {
     return localStorage.getItem(THEME_KEY) ?? themes[0].id
   })
+  const [deckId, setDeckId] = useState<string>(() => {
+    return localStorage.getItem(DECK_KEY) ?? cardDecks[0].id
+  })
   const [unlocks, setUnlocks] = useState<string[]>(() => loadUnlocks())
   const [points, setPoints] = useState<number | null>(null)
 
@@ -45,6 +52,11 @@ function App() {
   const themeIsAvailable =
     themeDef !== undefined && (!themeDef.locked || unlocks.includes(themeDef.id))
   const theme = themeIsAvailable ? themeDef! : themes[0]
+
+  const deckDef = cardDecks.find((d) => d.id === deckId)
+  const deckIsAvailable =
+    deckDef !== undefined && (!deckDef.locked || unlocks.includes(deckDef.id))
+  const deck = deckIsAvailable ? deckDef! : cardDecks[0]
 
   useEffect(() => {
     const root = document.documentElement
@@ -60,6 +72,17 @@ function App() {
     root.style.setProperty('--accent-2', theme.accent2 ?? DEFAULT_ACCENT_2)
     localStorage.setItem(THEME_KEY, theme.id)
   }, [theme])
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.style.setProperty('--card-face', deck.face)
+    root.style.setProperty('--card-red', deck.red)
+    root.style.setProperty('--card-black', deck.black)
+    root.style.setProperty('--card-back', deck.back)
+    root.style.setProperty('--card-border', deck.border ?? 'rgba(0,0,0,0.1)')
+    root.style.setProperty('--card-font', deck.font ?? 'Georgia, "Times New Roman", serif')
+    localStorage.setItem(DECK_KEY, deck.id)
+  }, [deck])
 
   useEffect(() => {
     localStorage.setItem(UNLOCKS_KEY, JSON.stringify(unlocks))
@@ -113,6 +136,8 @@ function App() {
     setThemeId(id)
     if (user) saveProfile(user.id, { theme_id: id })
   }
+
+  const selectDeck = (id: string) => setDeckId(id)
 
   const addUnlock = (themeId: string) => {
     setUnlocks((prev) => {
@@ -268,6 +293,60 @@ function App() {
             })}
           </ul>
         </div>
+
+        <div className="sidebar-section">
+          <h3 className="sidebar-label">Card deck</h3>
+          <ul className="theme-list">
+            {cardDecks.map((d) => {
+              const selected = d.id === deck.id
+              const locked = !!d.locked && !unlocks.includes(d.id)
+              const swatch = locked
+                ? d.back
+                : `linear-gradient(135deg, ${d.face} 0%, ${d.face} 60%, ${d.back} 60%)`
+              return (
+                <li key={d.id}>
+                  <button
+                    type="button"
+                    className={`theme-option ${selected ? 'is-selected' : ''} ${locked ? 'is-locked' : ''} ${d.rarity ? `rarity-${d.rarity}` : ''}`}
+                    onClick={() => !locked && selectDeck(d.id)}
+                    aria-pressed={selected}
+                    aria-disabled={locked}
+                    title={locked ? `Locked — buy in shop` : d.name}
+                    style={
+                      {
+                        '--swatch': swatch,
+                      } as CSSProperties
+                    }
+                  >
+                    <span className="theme-name">{locked ? '???' : d.name}</span>
+                    {d.rarity && (
+                      <span
+                        className={`theme-rarity-badge rarity-${d.rarity}`}
+                        aria-label={rarityLabel(d.rarity)}
+                      >
+                        <RarityIcon rarity={d.rarity} />
+                      </span>
+                    )}
+                    {locked && (
+                      <span className="theme-lock" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="12" height="12">
+                          <path
+                            d="M7 10V8a5 5 0 0 1 10 0v2m-12 0h14v10H5V10z"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                    )}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       </aside>
 
       <Routes>
@@ -281,6 +360,8 @@ function App() {
         />
         <Route path="/games/reaction" element={<ReactionGame />} />
         <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
+        <Route path="/games/blackjack" element={<BlackjackGame />} />
+        <Route path="/games/roulette" element={<RouletteGame />} />
       </Routes>
     </div>
   )

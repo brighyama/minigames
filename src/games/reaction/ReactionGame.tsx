@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import { useToast } from '../../lib/toast'
 import { fetchProfile } from '../../lib/profile'
+import { BackButton } from '../../components/BackButton'
 import './styles.css'
 
 type Phase = 'idle' | 'waiting' | 'ready' | 'tooEarly' | 'result'
@@ -119,10 +119,19 @@ export function ReactionGame() {
 
   const beginRound = () => {
     setPhase('waiting')
+    startRef.current = 0
     const delay = MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS)
     timerRef.current = window.setTimeout(() => {
-      startRef.current = performance.now()
       setPhase('ready')
+      // Start timing only once the green frame is actually on screen. The
+      // first rAF runs before the paint that shows green; the second runs on
+      // the following frame, by which point green is displayed. This keeps
+      // React render + browser paint latency out of the measured time.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          startRef.current = performance.now()
+        })
+      })
     }, delay)
   }
 
@@ -140,6 +149,9 @@ export function ReactionGame() {
       return
     }
     if (phase === 'ready') {
+      // Green is on screen (phase committed) but the paint-synced start stamp
+      // hasn't landed yet — ignore this click rather than record a bogus time.
+      if (startRef.current === 0) return
       const elapsed = performance.now() - startRef.current
       setTime(elapsed)
       setTimes((prev) => [...prev, elapsed])
@@ -162,14 +174,7 @@ export function ReactionGame() {
         }
       }}
     >
-      <Link
-        to="/"
-        className="game-exit"
-        onClick={(e) => e.stopPropagation()}
-        aria-label="Exit game"
-      >
-        ← Exit
-      </Link>
+      <BackButton label="Exit" onClick={(e) => e.stopPropagation()} />
 
       {times.length > 0 && (
         <div className="reaction-times-bar" aria-label="Recent times">

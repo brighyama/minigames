@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import { useToast } from '../../lib/toast'
 import { fetchProfile } from '../../lib/profile'
 import type { Rarity } from '../../lib/themes'
+import { BackButton } from '../../components/BackButton'
 import './styles.css'
 
 type Phase = 'idle' | 'playing' | 'result'
@@ -273,9 +273,7 @@ export function AimGame({ rarity }: Props) {
 
   return (
     <main className="aim-container">
-      <Link to="/" className="game-exit" aria-label="Exit game">
-        ← Exit
-      </Link>
+      <BackButton label="Exit" />
 
       <div className="aim-frame">
         <div

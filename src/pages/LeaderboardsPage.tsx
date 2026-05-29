@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Leaderboard } from '../components/Leaderboard'
+import { BackButton } from '../components/BackButton'
 import { useAuth } from '../lib/auth'
 import { fetchProfile } from '../lib/profile'
 import {
   fetchTotalPointsLeaderboard,
   fetchReactionLeaderboard,
   fetchAimLeaderboard,
+  fetchCasinoWinLeaderboard,
+  fetchCasinoNetLeaderboard,
 } from '../lib/leaderboards'
 
 export function LeaderboardsPage() {
@@ -38,8 +40,8 @@ export function LeaderboardsPage() {
 
   return (
     <main className="container">
+      <BackButton />
       <header className="hero hero-compact">
-        <Link to="/" className="back-link">← Back</Link>
         <h1 className="title title-md">Leaderboards</h1>
         <p className="subtitle">The best of the best, across every game.</p>
       </header>
@@ -62,6 +64,17 @@ export function LeaderboardsPage() {
           title="Aim Trainer"
           scoreLabel="Best score"
           load={() => fetchAimLeaderboard(100)}
+        />
+        <Leaderboard
+          title="Biggest Win"
+          scoreLabel="Single round"
+          load={() => fetchCasinoWinLeaderboard(100)}
+        />
+        <Leaderboard
+          title="Casino Net"
+          scoreLabel="Net winnings"
+          load={() => fetchCasinoNetLeaderboard(100)}
+          formatScore={(s) => (s > 0 ? `+${s.toLocaleString()}` : s.toLocaleString())}
         />
       </section>
     </main>

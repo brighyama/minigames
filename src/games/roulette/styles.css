@@ -1,0 +1,424 @@
+.rl-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100svh;
+  padding: 72px 24px 32px;
+  gap: 16px;
+}
+
+.rl-layout {
+  display: flex;
+  gap: 28px;
+  width: 100%;
+  max-width: 1180px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.rl-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.rl-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  min-width: 480px;
+  max-width: 680px;
+}
+
+/* ---- Recent numbers strip ---- */
+
+.rl-recent {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 30px;
+  align-items: center;
+}
+
+.rl-recent-empty {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.rl-recent-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  clip-path: var(--shape-octagon-sm);
+}
+
+/* Shared red/black/green fills for pills, number cells, diamonds. */
+.rl-red {
+  background: linear-gradient(135deg, #d63a4d, #9c1f2f);
+}
+.rl-black {
+  background: linear-gradient(135deg, #34343c, #18181d);
+}
+.rl-green {
+  background: linear-gradient(135deg, #28a05a, #157a42);
+}
+
+/* ---- Wheel ---- */
+
+.rl-wheel-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rl-wheel {
+  display: block;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.5));
+}
+
+.rl-status {
+  margin-top: 10px;
+  padding: 7px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  clip-path: var(--shape-octagon-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.rl-status-result {
+  color: #ffd76b;
+}
+
+/* ---- Result ---- */
+
+.rl-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  animation: rl-pop 0.25s ease-out;
+}
+
+@keyframes rl-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.rl-result-net {
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+}
+.rl-result-net.is-win {
+  color: #4ade80;
+  text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+}
+.rl-result-net.is-lose {
+  color: #f87171;
+}
+.rl-result-net.is-push {
+  color: #ffffff;
+}
+.rl-result-sub {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---- HUD ---- */
+
+.rl-hud {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.rl-hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 7px 14px;
+  background: rgba(0, 0, 0, 0.4);
+  clip-path: var(--shape-octagon-sm);
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+.rl-hud-label {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+.rl-hud-value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ---- Betting board ---- */
+
+.rl-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: 0.8fr repeat(12, 1fr) 0.85fr;
+  grid-template-rows: repeat(3, 46px) 38px 38px;
+  gap: 4px;
+  padding: 10px;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(20, 90, 60, 0.55),
+    rgba(8, 36, 26, 0.6)
+  );
+  clip-path: var(--shape-diagonal);
+}
+
+.rl-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  clip-path: var(--shape-octagon-sm);
+  transition: transform 0.1s ease, filter 0.15s ease, background 0.15s ease;
+}
+
+.rl-cell:hover:not(:disabled) {
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+
+.rl-cell.is-closed {
+  cursor: default;
+}
+
+.rl-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.rl-outside {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* Red/Black even-money cells render a diamond instead of text. */
+.rl-diamond-red,
+.rl-diamond-black {
+  background: rgba(255, 255, 255, 0.07);
+}
+.rl-diamond-red::after,
+.rl-diamond-black::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  transform: rotate(45deg);
+}
+.rl-diamond-red::after {
+  background: linear-gradient(135deg, #d63a4d, #9c1f2f);
+}
+.rl-diamond-black::after {
+  background: linear-gradient(135deg, #34343c, #18181d);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.rl-cell-label {
+  pointer-events: none;
+}
+
+/* Chip stacked on a placed bet. */
+.rl-cell-chip {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #1a1205;
+  background: radial-gradient(circle at 40% 35%, #ffe18a, #f0b429);
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  border-radius: 9px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.rl-cell.is-winner {
+  animation: rl-winner 0.6s ease-in-out infinite alternate;
+  z-index: 2;
+}
+@keyframes rl-winner {
+  from {
+    box-shadow: 0 0 0 1px #ffd76b;
+  }
+  to {
+    box-shadow: 0 0 14px 2px rgba(255, 215, 100, 0.9);
+  }
+}
+
+/* Dim the board once betting closes. */
+.rl-board-veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 18, 14, 0.35);
+  clip-path: var(--shape-diagonal);
+  pointer-events: none;
+}
+
+/* ---- Chips ---- */
+
+.rl-chip-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.rl-chip {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 4px dashed rgba(255, 255, 255, 0.55);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.12s ease, box-shadow 0.18s ease, opacity 0.18s,
+    border-color 0.15s;
+}
+.rl-chip:hover:not(:disabled) {
+  transform: translateY(-3px);
+}
+.rl-chip:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.rl-chip.is-selected {
+  border-color: #ffffff;
+  border-style: solid;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55), 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+
+/* Chip colors mirror rarity order: green → blue → purple → red → gold. */
+.rl-chip.chip-10 {
+  background: radial-gradient(circle at 35% 35%, #6ee79d, #166534);
+}
+.rl-chip.chip-100 {
+  background: radial-gradient(circle at 35% 35%, #60a5fa, #1e3a8a);
+}
+.rl-chip.chip-1000 {
+  background: radial-gradient(circle at 35% 35%, #c084fc, #581c87);
+}
+.rl-chip.chip-10000 {
+  background: radial-gradient(circle at 35% 35%, #f87171, #7f1d1d);
+}
+.rl-chip.chip-100000 {
+  background: radial-gradient(circle at 35% 35%, #fde68a, #b45309);
+}
+
+/* ---- Bet action buttons ---- */
+
+.rl-bet-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.rl-btn {
+  padding: 10px 22px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  cursor: pointer;
+  clip-path: var(--shape-octagon-sm);
+  transition: background 0.18s ease, opacity 0.18s;
+}
+.rl-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+.rl-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.rl-btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rl-note {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+@media (max-width: 1080px) {
+  .rl-right {
+    min-width: 0;
+    width: 100%;
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 560px) {
+  .rl-board {
+    grid-template-rows: repeat(3, 38px) 32px 32px;
+    gap: 3px;
+    padding: 6px;
+  }
+  .rl-cell {
+    font-size: 11px;
+  }
+  .rl-chip {
+    width: 46px;
+    height: 46px;
+    font-size: 11px;
+  }
+}

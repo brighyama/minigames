@@ -1,6 +1,8 @@
 # Minigames — Project Reference
 
-A personal hub of small browser games (Reaction Test, Aim Trainer, more planned) with shared progression: accounts, points, daily bonuses, a shop, themes, achievement-style theme rarities, and leaderboards.
+A personal hub of small browser games with shared progression: accounts, points, daily bonuses, a shop, themes, card decks, achievement-style rarities, and leaderboards. Two families of games:
+- **Skill games** — Reaction Test, Aim Trainer (high-score based).
+- **Casino games** — Blackjack, Roulette (wager points). Grouped under a "Casino" section on the home page.
 
 This file is the catch-up doc for new chats. Read top to bottom — the architecture sections come first, then the feature inventory, then the extension cookbook at the bottom.
 
@@ -49,8 +51,10 @@ src/
                               for the columns the client cares about.
     themes.ts                 The Theme type + the themes array. Edit this file to add / reprice /
                               reskin any theme. Also exports DEFAULT_ACCENT_1 / DEFAULT_ACCENT_2.
-    leaderboards.ts           fetchTotalPointsLeaderboard / fetchReactionLeaderboard /
-                              fetchAimLeaderboard helpers (thin wrappers over Supabase RPC calls).
+    leaderboards.ts           fetch*Leaderboard helpers (thin wrappers over Supabase RPC calls):
+                              Total / Reaction / Aim / CasinoWin / CasinoNet.
+    cardDecks.ts              CardDeck type + cardDecks array. Active deck writes --card-* CSS
+                              vars on :root (face/red/black/back/border/font). Mirrors themes.ts.
 
   components/
     AuthPanel.tsx             Sign-in / Sign-up form OR signed-in view (username, password change,
@@ -59,8 +63,10 @@ src/
                               claim_daily_points RPC.
     Leaderboard.tsx           Generic leaderboard card (loading/error/empty/data states, gold/silver/
                               bronze for ranks 1-3). Used in the LeaderboardsPage.
-    RarityIcon.tsx            Renders 1/2/3 star SVGs for blue/purple/red, crown for gold.
+    RarityIcon.tsx            Renders 1/2/3/4 star SVGs for green/blue/purple/red, crown for gold.
                               rarityLabel() returns the accessible name.
+    BackButton.tsx            Universal fixed top-center exit/back button. Used on every non-home
+                              page (shop, leaderboards, all games). label defaults to "Back".
 
   pages/
     HomePage.tsx              Hero + grid of game cards. Each card = 80% image / 20% name strip. No
@@ -83,6 +89,21 @@ src/
                               on hit. 20s timer. Rarity-driven particle effects on hit (red →
                               gravity explosion, gold → no-gravity sparkle).
       styles.css              Game-specific styles.
+    blackjack/
+      BlackjackGame.tsx       Full table. Hit/stand/double/split/insurance. Optimistic backend
+                              (spend_points on stakes, add_points + record_casino_result on settle).
+      lib.ts                  Pure deck/hand logic: shoe, totals, dealer S17, settle (3:2 BJ).
+      Card.tsx / Hand.tsx     Card render (reads --card-* deck vars) + hand with total badge.
+      styles.css
+    roulette/
+      RouletteGame.tsx        Autonomous round loop (betting 12s → spinning 6.5s → result 4.5s),
+                              runs forever even with no bet. Server-authoritative when signed in +
+                              bets placed (roulette_spin RPC); local RNG otherwise.
+      RouletteWheel.tsx       Canvas wheel + ball physics. Continuous rotation; imperative spinTo(n)
+                              lands the ball in pocket n; ball rides the pocket at rest.
+      RouletteTable.tsx       European felt: 0 + 3×12 grid, columns/dozens/even-money. Chip placement.
+      lib.ts                  Wheel order, colorOf, bet defs (covers + payout), settleRound, abbrev.
+      styles.css
 ```
 
 ---
@@ -105,11 +126,23 @@ src/
 - Default themes (4, unlocked): **Classic, Forest, Lilac, Mono.**
 - Locked themes (5, in shop): **Mint, Candy, Ember, Midnight, Noir.**
 
-### Theme rarity glow
+### Rarity glow (themes + card decks)
 
-- `Theme.rarity?: 'blue' | 'purple' | 'red' | 'gold'`.
-- Visual indicator via [components/RarityIcon.tsx](src/components/RarityIcon.tsx): 1/2/3 stars for blue/purple/red, a crown SVG for gold (the "exclusive" tier).
-- Glow effect: outer background swapped to the rarity color + `filter: drop-shadow(...)` traces the chamfered shape. Applied on both sidebar tiles and shop cards.
+- `Rarity = 'green' | 'blue' | 'purple' | 'red' | 'gold'` (in [themes.ts](src/lib/themes.ts); shared by card decks).
+- Visual indicator via [components/RarityIcon.tsx](src/components/RarityIcon.tsx): 1/2/3/4 stars for green/blue/purple/red, a crown SVG for gold (the "exclusive" tier).
+- Glow effect: outer background swapped to the rarity color + `filter: drop-shadow(...)` traces the chamfered shape. Applied on sidebar tiles and shop cards.
+- **Cost tiers scale ~exponentially** with rarity: green ~100, blue ~1K, purple ~10K, red ~100K, gold ~1M. Casino chip denominations mirror this ladder (10 / 100 / 1K / 10K / 100K, colored green→blue→purple→red→gold).
+
+### Card decks
+
+- Defined in [src/lib/cardDecks.ts](src/lib/cardDecks.ts) — `CardDeck` type + `cardDecks` array (first = default, always unlocked).
+- Active deck writes `--card-face`, `--card-red`, `--card-black`, `--card-back`, `--card-border`, `--card-font` on `:root` from [App.tsx](src/App.tsx). `Card.tsx` (blackjack) consumes them, so a deck change reskins cards live.
+- Selector lives in the sidebar (below Theme). Locked decks auto-appear in the Shop "Card decks" section. Decks: **Classic** (free), **Mono** (green), **Neon** (purple), **Royal** (red).
+- NOTE: deck choice is **localStorage-only** (`minigames:deck`) — no `deck_id` profile column yet, so it doesn't sync across devices.
+
+### Selected-cosmetic indicator
+
+- The active theme/deck tile shows a translucent checkmark overlay (`.theme-option.is-selected::after` in [App.css](src/App.css)). The hover-name label sits above it (`z-index: 3`).
 
 ### Points + lifetime points
 
@@ -141,7 +174,7 @@ src/
 ### Leaderboards
 
 - Route `/leaderboards`. Cards rendered in a responsive grid.
-- Three boards so far: **Total Points**, **Reaction Time** (lower = better, formatted as `X ms`), **Aim Trainer** (higher = better).
+- Five boards: **Total Points**, **Reaction Time** (lower = better, `X ms`), **Aim Trainer**, **Biggest Win** (single casino round), **Casino Net** (cumulative, can be negative — signed display).
 - All three driven by `SECURITY DEFINER` RPCs that filter `username is not null`. Users without a username never appear — the page shows a gold banner reminding them to set one.
 
 ### Games
@@ -165,6 +198,22 @@ src/
 - High score = most circles in a single round. **Saved immediately when a round ends** if it's a new personal best (RPC `update_aim_high_score`).
 - Points on exit: `5 + Math.floor(best_session_score / 2)`. Minimum 5 for completing at least one full 20s round.
 
+#### Blackjack (`src/games/blackjack/`)
+
+- 6-deck shoe, dealer stands on all 17s (S17), blackjack pays 3:2. Hit / Stand / Double / Split / Insurance.
+- Backend: **optimistic** (hybrid model). Outcome is computed client-side; each stake calls `spend_points`, the settle calls `add_points(totalReturn)` + `record_casino_result(net)`. Local `balance` (seeded from `points`) drives the UI instantly. Signed-out = local demo bankroll.
+
+#### Roulette (`src/games/roulette/`)
+
+- European single-zero wheel. Animated canvas wheel + ball physics (continuous spin; ball rides its pocket between rounds). Standard felt: straight numbers + columns / dozens / red-black / even-odd / 1-18 / 19-36. Recent 10 numbers shown.
+- **Autonomous round loop** runs forever (betting 12s → spinning 6.5s → result 4.5s) even with no bet, so the wheel can be watched idle.
+- Backend: **server-authoritative** when signed in AND bets are placed — `roulette_spin(bets)` RPC picks the number + computes payout + moves points atomically, returning the number the client then animates to. No-bet rounds and signed-out play use local RNG.
+- StrictMode-safe: round-id guard (`settledRoundRef`) makes settlement idempotent; the spin RPC only fires from the `spinning` phase effect (not the double-invoked mount effect).
+
+### Home page categories
+
+- [HomePage.tsx](src/pages/HomePage.tsx) renders two grids: skill games up top, then a **Casino** section (`.home-section` + `.home-section-title`) with Blackjack + Roulette.
+
 ### Top-right cluster visibility
 
 - The points badge, daily-bonus button, and shop link only render when `location.pathname === '/'`. Other routes (games, shop, leaderboards) hide them so the focus is on whatever's there.
@@ -186,6 +235,8 @@ src/
 | `last_daily_claim` | `timestamptz` | Set by `claim_daily_points`. Null = never claimed. |
 | `best_reaction_avg` | `int` | Lowest rolling-5 avg in ms. Null = no record. |
 | `aim_high_score` | `int` | Most circles in 20s. 0 = no record. |
+| `casino_net` | `bigint` | Cumulative casino net (can be negative). Drives Casino Net board. |
+| `casino_biggest_win` | `int` | Best single-round net win. Drives Biggest Win board. |
 | `updated_at` | `timestamptz` | Touched on every write. |
 
 ### RPC functions (all `SECURITY DEFINER`)
@@ -201,6 +252,11 @@ src/
 | `get_leaderboard_total(lim int)` | anon, authenticated | Lifetime points, descending. |
 | `get_leaderboard_reaction(lim int)` | anon, authenticated | Best reaction avg, ascending. |
 | `get_leaderboard_aim(lim int)` | anon, authenticated | Aim high score, descending. |
+| `roulette_multiplier(bet_id text, winning int)` | (helper) | Gross return factor for a bet (0/2/3/36). Mirrors `betDef`. |
+| `roulette_spin(bets jsonb)` | authenticated | Server-authoritative: deducts wager, picks number, pays out, records stats. Returns `(winning, total_wagered, total_return, net, new_points)`. |
+| `record_casino_result(net int)` | authenticated | Updates `casino_net` + `casino_biggest_win` (for client-settled games like blackjack). |
+| `get_leaderboard_casino_win(lim int)` | anon, authenticated | Biggest single-round win, descending. |
+| `get_leaderboard_casino_net(lim int)` | anon, authenticated | Cumulative casino net, descending. |
 
 ### RLS
 
@@ -241,6 +297,10 @@ update public.profiles set last_daily_claim = null where username = 'your-userna
 -- Reset high scores (to retest leaderboard writes)
 update public.profiles set best_reaction_avg = null, aim_high_score = 0
  where username = 'your-username';
+
+-- Reset casino stats
+update public.profiles set casino_net = 0, casino_biggest_win = 0
+ where username = 'your-username';
 ```
 
 After running, sign out + back in to refresh client state (or rely on the existing `points-changed` event).
@@ -269,3 +329,6 @@ Add a second `<section className="shop-section">` to [src/pages/ShopPage.tsx](sr
 - **`saveProfile` writes are explicit.** Avoid `useEffect`s that auto-save on every change — they cause re-save loops with the hydration effect. The pattern in App.tsx: `selectTheme`/`addUnlock` call `saveProfile` directly only in response to user actions.
 - **Leaderboard rows require `username is not null`.** Anonymous profiles never appear. The LeaderboardsPage shows a banner reminding the user.
 - **Don't put points/daily/shop on non-home routes.** App.tsx uses `useLocation()` and `isHome` to gate the top-right cluster.
+- **Casino backend is hybrid.** Roulette is server-authoritative (`roulette_spin` owns RNG + payout). Blackjack is optimistic (client computes outcome, mirrors stakes/payout via `spend_points`/`add_points`). This was a deliberate effort/security trade-off — note the **whole economy is already client-trusted**: `add_points`/`spend_points` accept arbitrary amounts from any signed-in user, so optimistic blackjack isn't a regression. Hardening blackjack into a server-side hand state machine is a known future option.
+- **Reaction timing is paint-synced.** The waiting→ready color flip has **no CSS transition** (an eased flip inflated reaction times), and the clock starts inside a double `requestAnimationFrame` after the green frame paints, not when state is set.
+- **Exit/back is universal.** All non-home pages use [components/BackButton.tsx](src/components/BackButton.tsx) (fixed top-center). Don't reintroduce per-game corner exit buttons.
