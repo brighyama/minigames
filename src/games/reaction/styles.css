@@ -1,0 +1,181 @@
+.reaction-game {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px;
+
+  cursor: pointer;
+  user-select: none;
+  color: #ffffff;
+  font-family: var(--theme-font, inherit);
+
+  transition: background 0.12s ease;
+}
+
+.reaction-game:focus-visible {
+  outline: none;
+}
+
+.reaction-game.is-idle,
+.reaction-game.is-result {
+  background: linear-gradient(135deg, var(--bg-start), var(--bg-stop));
+}
+
+.reaction-game.is-waiting {
+  background: var(--reaction-wait, #c0392b);
+}
+
+.reaction-game.is-ready {
+  background: var(--reaction-go, #27ae60);
+}
+
+.reaction-game.is-tooEarly {
+  background: #1f1f29;
+}
+
+.reaction-content {
+  max-width: 720px;
+}
+
+.reaction-heading {
+  font-family: var(--theme-font, inherit);
+  font-size: clamp(48px, 9vw, 112px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin: 0 0 20px;
+  color: #ffffff;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+}
+
+.reaction-sub {
+  font-size: clamp(16px, 1.6vw, 20px);
+  color: rgba(255, 255, 255, 0.88);
+  margin: 0 0 24px;
+}
+
+.reaction-cta {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+.reaction-time {
+  font-family: var(--theme-font, ui-monospace, 'Courier New', monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(80px, 16vw, 200px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 20px;
+  color: #ffffff;
+  text-shadow: 0 6px 32px rgba(0, 0, 0, 0.5);
+}
+
+.reaction-unit {
+  font-size: 0.4em;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 0.1em;
+}
+
+/* Recent-times strip at the top of the game */
+
+.reaction-times-bar {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  clip-path: var(--shape-octagon-sm);
+
+  font-family: var(--theme-font, ui-monospace, 'Courier New', monospace);
+  font-variant-numeric: tabular-nums;
+}
+
+.reaction-times-list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 6px;
+}
+
+.reaction-times-item {
+  padding: 5px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.08);
+  clip-path: var(--shape-octagon-sm);
+}
+
+.reaction-times-item.is-latest {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.reaction-times-avg {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.reaction-times-avg-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.reaction-times-avg-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Exit button — re-usable for future games. */
+
+.game-exit {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 20;
+  padding: 9px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+  clip-path: var(--shape-octagon-sm);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.game-exit:hover {
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+}
