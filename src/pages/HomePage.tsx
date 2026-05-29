@@ -3,10 +3,18 @@ import { Link } from 'react-router-dom'
 type Game = {
   id: string
   name: string
-  description: string
-  emoji: string
   /** Set when the game has a playable route. */
   path?: string
+  /**
+   * Optional URL to an image file (e.g., '/games/reaction.png' placed in
+   * `public/games/`). When set it fills the top 80% of the card.
+   */
+  image?: string
+  /**
+   * CSS background used when `image` is not set. Lets each game have a
+   * distinct placeholder until art is added.
+   */
+  placeholderGradient?: string
 }
 
 // Order in this array = order on the home grid.
@@ -16,21 +24,21 @@ const games: Game[] = [
   {
     id: 'reaction',
     name: 'Reaction Test',
-    description: 'How fast can you react?',
-    emoji: '⚡',
     path: '/games/reaction',
+    placeholderGradient:
+      'linear-gradient(135deg, #c0392b 0%, #f4f4f4 50%, #27ae60 100%)',
   },
   {
     id: 'aim-trainer',
     name: 'Aim Trainer',
-    description: 'Sharpen your reflexes and precision.',
-    emoji: '🎯',
+    path: '/games/aim',
+    placeholderGradient:
+      'radial-gradient(circle at 30% 30%, #6db2ff 0%, #2d4ea0 60%, #0e1a3a 100%)',
   },
   {
     id: 'chess',
     name: 'Chess',
-    description: 'The classic game of strategy.',
-    emoji: '♟️',
+    placeholderGradient: 'linear-gradient(135deg, #5e3a1c 0%, #d4b08c 100%)',
   },
 ]
 
@@ -43,26 +51,32 @@ export function HomePage() {
       </header>
 
       <section className="grid" aria-label="Games">
-        {games.map((game) =>
-          game.path ? (
-            <Link key={game.id} to={game.path} className="card">
-              <div className="card-emoji" aria-hidden="true">
-                {game.emoji}
+        {games.map((game) => {
+          const imageStyle = game.image
+            ? { backgroundImage: `url(${game.image})` }
+            : { background: game.placeholderGradient }
+
+          const inner = (
+            <>
+              <div className="card-image" style={imageStyle} aria-hidden="true">
+                {!game.path && <span className="card-badge">Coming Soon</span>}
               </div>
-              <h2 className="card-title">{game.name}</h2>
-              <p className="card-desc">{game.description}</p>
+              <div className="card-footer">
+                <h2 className="card-title">{game.name}</h2>
+              </div>
+            </>
+          )
+
+          return game.path ? (
+            <Link key={game.id} to={game.path} className="card">
+              {inner}
             </Link>
           ) : (
             <div key={game.id} className="card card-soon" aria-disabled="true">
-              <span className="card-badge">Coming Soon</span>
-              <div className="card-emoji" aria-hidden="true">
-                {game.emoji}
-              </div>
-              <h2 className="card-title">{game.name}</h2>
-              <p className="card-desc">{game.description}</p>
+              {inner}
             </div>
-          ),
-        )}
+          )
+        })}
       </section>
     </main>
   )

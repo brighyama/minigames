@@ -27,11 +27,11 @@
 }
 
 .reaction-game.is-waiting {
-  background: var(--reaction-wait, #c0392b);
+  background: var(--accent-1, #c0392b);
 }
 
 .reaction-game.is-ready {
-  background: var(--reaction-go, #27ae60);
+  background: var(--accent-2, #27ae60);
 }
 
 .reaction-game.is-tooEarly {
@@ -87,6 +87,19 @@
   margin-left: 0.1em;
 }
 
+.reaction-best {
+  font-size: clamp(14px, 1.3vw, 16px);
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 14px;
+}
+
+.reaction-best strong {
+  font-family: var(--theme-font, ui-monospace, 'Courier New', monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #ffffff;
+}
+
 /* Recent-times strip at the top of the game */
 
 .reaction-times-bar {
@@ -132,12 +145,17 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-.reaction-times-avg {
+.reaction-times-avg,
+.reaction-times-best {
   display: flex;
   align-items: baseline;
   gap: 8px;
   padding-left: 14px;
   border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.reaction-times-best .reaction-times-avg-value {
+  color: var(--theme-text, #ffd76b);
 }
 
 .reaction-times-avg-label {

@@ -11,6 +11,9 @@ export type LeaderboardResult = {
   error?: string
 }
 
+type ScoreRow = { rank: number; username: string; score: number }
+type LifetimeRow = { rank: number; username: string; lifetime_points: number }
+
 export async function fetchTotalPointsLeaderboard(
   limit = 100,
 ): Promise<LeaderboardResult> {
@@ -21,10 +24,42 @@ export async function fetchTotalPointsLeaderboard(
   if (error) {
     return { rows: [], error: error.message }
   }
-  const rows = (data ?? []).map((r: { rank: number; username: string; lifetime_points: number }) => ({
+  const rows = (data ?? []).map((r: LifetimeRow) => ({
     rank: r.rank,
     username: r.username,
     score: r.lifetime_points,
+  }))
+  return { rows }
+}
+
+export async function fetchReactionLeaderboard(
+  limit = 100,
+): Promise<LeaderboardResult> {
+  if (!supabase) return { rows: [], error: 'Auth is not configured.' }
+  const { data, error } = await supabase.rpc('get_leaderboard_reaction', {
+    lim: limit,
+  })
+  if (error) return { rows: [], error: error.message }
+  const rows = (data ?? []).map((r: ScoreRow) => ({
+    rank: r.rank,
+    username: r.username,
+    score: r.score,
+  }))
+  return { rows }
+}
+
+export async function fetchAimLeaderboard(
+  limit = 100,
+): Promise<LeaderboardResult> {
+  if (!supabase) return { rows: [], error: 'Auth is not configured.' }
+  const { data, error } = await supabase.rpc('get_leaderboard_aim', {
+    lim: limit,
+  })
+  if (error) return { rows: [], error: error.message }
+  const rows = (data ?? []).map((r: ScoreRow) => ({
+    rank: r.rank,
+    username: r.username,
+    score: r.score,
   }))
   return { rows }
 }

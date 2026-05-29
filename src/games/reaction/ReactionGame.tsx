@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import { useToast } from '../../lib/toast'
+import { fetchProfile } from '../../lib/profile'
 import './styles.css'
 
 type Phase = 'idle' | 'waiting' | 'ready' | 'tooEarly' | 'result'
@@ -13,8 +14,8 @@ const ROLLING_WINDOW = 5
 
 /**
  * Points scale:
- *   avg ≤ 250 ms  → 10 (max)
- *   each 10 ms above 250 ms  → -1 point
+ *   avg ≤ 250 ms      → 10 (max)
+ *   each 10 ms above  → -1 point
  *   floor              → 5 (reached at avg ≥ 300 ms)
  */
 function pointsForAverage(avg: number): number {
@@ -29,16 +30,33 @@ export function ReactionGame() {
   const [phase, setPhase] = useState<Phase>('idle')
   const [time, setTime] = useState(0)
   const [times, setTimes] = useState<number[]>([])
+  /** All-time best avg in ms (lower is better). Null = no record yet. */
+  const [highScore, setHighScore] = useState<number | null>(null)
 
   const startRef = useRef(0)
   const timerRef = useRef<number | null>(null)
   const userIdRef = useRef<string | null>(null)
   const bestAvgRef = useRef<number | null>(null)
 
-  // Keep refs in sync each render so the unmount cleanup sees the latest values.
   userIdRef.current = user?.id ?? null
 
-  // Derive the recent-5 list, current rolling avg, and best rolling avg.
+  // Pull existing best from the server so the player sees a target.
+  useEffect(() => {
+    if (!user) {
+      setHighScore(null)
+      return
+    }
+    let cancelled = false
+    fetchProfile(user.id).then((profile) => {
+      if (cancelled || !profile) return
+      setHighScore(profile.best_reaction_avg)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
+  // Derive recent-5 list, current rolling avg, and best rolling avg this session.
   const recent = times.slice(-ROLLING_WINDOW)
   let currentAvg: number | null = null
   let bestAvg: number | null = null
@@ -52,9 +70,34 @@ export function ReactionGame() {
   }
   bestAvgRef.current = bestAvg
 
-  // On unmount: clear any pending timer and award points based on the
-  // session's lowest rolling-5 average (only if the player completed at
-  // least one full window of 5 and is signed in).
+  // Live-update the displayed high score if the player beats it mid-session,
+  // and persist the new best immediately so the save doesn't depend on the
+  // unmount timing window.
+  useEffect(() => {
+    if (bestAvg === null) return
+    const rounded = Math.round(bestAvg)
+    setHighScore((prev) => {
+      if (prev !== null && rounded >= prev) return prev
+      if (userIdRef.current && supabase) {
+        void supabase
+          .rpc('update_reaction_best', { avg_ms: rounded })
+          .then((res) => {
+            if (res.error) {
+              console.error('[reaction] update_reaction_best failed:', res.error)
+              toast.show(`Couldn't save best avg: ${res.error.message}`, {
+                tone: 'error',
+              })
+            }
+          })
+      }
+      return rounded
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bestAvg])
+
+  // On unmount: clear timer and award points based on the session's best avg.
+  // The high score itself is persisted as soon as a new best appears (above)
+  // so this cleanup only needs to handle the points award.
   useEffect(() => {
     return () => {
       if (timerRef.current !== null) window.clearTimeout(timerRef.current)
@@ -63,6 +106,7 @@ export function ReactionGame() {
       const amount = pointsForAverage(best)
       void supabase.rpc('add_points', { amount }).then((res) => {
         if (res.error) {
+          console.error('[reaction] add_points failed:', res.error)
           toast.show(`Couldn't save points: ${res.error.message}`, { tone: 'error' })
           return
         }
@@ -102,6 +146,8 @@ export function ReactionGame() {
       setPhase('result')
     }
   }
+
+  const showBest = highScore !== null && highScore > 0
 
   return (
     <div
@@ -148,6 +194,12 @@ export function ReactionGame() {
               </span>
             </div>
           )}
+          {showBest && (
+            <div className="reaction-times-best">
+              <span className="reaction-times-avg-label">best</span>
+              <span className="reaction-times-avg-value">{highScore}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -158,6 +210,11 @@ export function ReactionGame() {
             <p className="reaction-sub">
               When the screen changes color, click as fast as you can.
             </p>
+            {showBest && (
+              <p className="reaction-best">
+                Your best avg: <strong>{highScore} ms</strong>
+              </p>
+            )}
             <p className="reaction-cta">Click anywhere to start</p>
           </>
         )}
@@ -185,6 +242,11 @@ export function ReactionGame() {
               {Math.round(time)}
               <span className="reaction-unit"> ms</span>
             </div>
+            {showBest && (
+              <p className="reaction-best">
+                Best avg: <strong>{highScore} ms</strong>
+              </p>
+            )}
             <p className="reaction-cta">Click to try again</p>
           </>
         )}

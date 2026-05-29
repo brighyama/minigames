@@ -1,3 +1,13 @@
+/**
+ * Rarity tiers — keyed by glow color so the value maps directly to a CSS
+ * class (`rarity-blue`, etc.). Visual indicator:
+ *   blue   = 1 star
+ *   purple = 2 stars
+ *   red    = 3 stars
+ *   gold   = crown ("exclusive")
+ */
+export type Rarity = 'blue' | 'purple' | 'red' | 'gold'
+
 export type Theme = {
   id: string
   name: string
@@ -7,6 +17,8 @@ export type Theme = {
   locked?: boolean
   /** Shop price in points. Only meaningful when locked. */
   cost?: number
+  /** Glow tier shown around the theme tile and on the shop card. */
+  rarity?: Rarity
   /** Hint shown on the locked tile if no shop entry is configured. */
   unlockHint?: string
   /** Override the main text color. Defaults to white. */
@@ -15,14 +27,22 @@ export type Theme = {
   font?: string
   /** Optional CSS text-shadow / glow applied to titles. */
   titleShadow?: string
-  /** Reaction game "wait" background. Defaults to red. */
-  reactionWait?: string
-  /** Reaction game "go" background. Defaults to green. */
-  reactionGo?: string
+  /**
+   * Primary accent color, exposed as `--accent-1`. Used for game-state
+   * highlights, button fills, etc. (e.g., the "wait" screen in the reaction
+   * test). Defaults to red.
+   */
+  accent1?: string
+  /**
+   * Secondary accent color, exposed as `--accent-2`. Contrasting counterpart
+   * to `accent1` (e.g., the "go" screen in the reaction test). Defaults to
+   * green.
+   */
+  accent2?: string
 }
 
-export const DEFAULT_REACTION_WAIT = '#c0392b'
-export const DEFAULT_REACTION_GO = '#27ae60'
+export const DEFAULT_ACCENT_1 = '#c0392b'
+export const DEFAULT_ACCENT_2 = '#27ae60'
 
 /**
  * The first entry is the default theme for brand-new users.
@@ -45,8 +65,9 @@ export const themes: Theme[] = [
     stop: '#34e89e',
     locked: true,
     cost: 100,
-    reactionWait: '#082a26',
-    reactionGo: '#34e89e',
+    rarity: 'blue',
+    accent1: '#082a26',
+    accent2: '#34e89e',
   },
   {
     id: 'candy',
@@ -55,8 +76,9 @@ export const themes: Theme[] = [
     stop: '#7873f5',
     locked: true,
     cost: 200,
-    reactionWait: '#3a2a8a',
-    reactionGo: '#ff6ec4',
+    rarity: 'blue',
+    accent1: '#3a2a8a',
+    accent2: '#ff6ec4',
   },
   {
     id: 'ember',
@@ -65,8 +87,9 @@ export const themes: Theme[] = [
     stop: '#ff5e3a',
     locked: true,
     cost: 350,
-    reactionWait: '#2a1010',
-    reactionGo: '#ff5e3a',
+    rarity: 'purple',
+    accent1: '#2a1010',
+    accent2: '#ff5e3a',
   },
   {
     id: 'midnight',
@@ -75,8 +98,9 @@ export const themes: Theme[] = [
     stop: '#302b63',
     locked: true,
     cost: 500,
-    reactionWait: '#0a0716',
-    reactionGo: '#7c3aed',
+    rarity: 'red',
+    accent1: '#0a0716',
+    accent2: '#7c3aed',
   },
   {
     id: 'noir',
@@ -85,7 +109,8 @@ export const themes: Theme[] = [
     stop: '#434343',
     locked: true,
     cost: 750,
-    reactionWait: '#000000',
-    reactionGo: '#ffffff',
+    rarity: 'gold',
+    accent1: '#000000',
+    accent2: '#ffffff',
   },
 ]

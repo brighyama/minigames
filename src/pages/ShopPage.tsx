@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../lib/toast'
 import { themes, type Theme } from '../lib/themes'
+import { RarityIcon, rarityLabel } from '../components/RarityIcon'
 
 type Props = {
   unlocks: string[]
@@ -69,9 +70,13 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
             const cost = theme.cost ?? 0
             const canAfford = points !== null && points >= cost
             const busy = busyId === theme.id
+            const rarityClass = theme.rarity ? `rarity-${theme.rarity}` : ''
 
             return (
-              <article key={theme.id} className="shop-card">
+              <article
+                key={theme.id}
+                className={`shop-card ${rarityClass}`}
+              >
                 <div
                   className="shop-card-preview"
                   style={{
@@ -82,22 +87,25 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
                 <div className="shop-card-body">
                   <div className="shop-card-head">
                     <h3 className="shop-card-name">{theme.name}</h3>
-                    {owned ? (
-                      <span className="shop-card-tag shop-card-owned">Owned</span>
-                    ) : (
-                      <span className="shop-card-tag">{cost} pts</span>
-                    )}
+                    <div className="shop-card-tags">
+                      {theme.rarity && (
+                        <span
+                          className={`shop-card-rarity rarity-${theme.rarity}`}
+                          aria-label={rarityLabel(theme.rarity)}
+                          title={rarityLabel(theme.rarity)}
+                        >
+                          <RarityIcon rarity={theme.rarity} />
+                        </span>
+                      )}
+                      {owned ? (
+                        <span className="shop-card-tag shop-card-owned">Owned</span>
+                      ) : (
+                        <span className="shop-card-tag">{cost} pts</span>
+                      )}
+                    </div>
                   </div>
 
-                  {owned ? (
-                    <button
-                      type="button"
-                      className="shop-card-button is-owned"
-                      disabled
-                    >
-                      In your library
-                    </button>
-                  ) : (
+                  {!owned && (
                     <button
                       type="button"
                       className="shop-card-button"

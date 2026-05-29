@@ -1,18 +1,21 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { Link, Route, Routes } from 'react-router-dom'
+import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
 import { useAuth } from './lib/auth'
 import { fetchProfile, saveProfile } from './lib/profile'
 import {
   themes,
-  DEFAULT_REACTION_WAIT,
-  DEFAULT_REACTION_GO,
+  DEFAULT_ACCENT_1,
+  DEFAULT_ACCENT_2,
 } from './lib/themes'
 import { AuthPanel } from './components/AuthPanel'
+import { DailyBonus } from './components/DailyBonus'
+import { RarityIcon, rarityLabel } from './components/RarityIcon'
 import { HomePage } from './pages/HomePage'
 import { LeaderboardsPage } from './pages/LeaderboardsPage'
 import { ShopPage } from './pages/ShopPage'
 import { ReactionGame } from './games/reaction/ReactionGame'
+import { AimGame } from './games/aim/AimGame'
 
 const THEME_KEY = 'minigames:theme'
 const UNLOCKS_KEY = 'minigames:unlocks'
@@ -28,6 +31,8 @@ function loadUnlocks(): string[] {
 
 function App() {
   const { user } = useAuth()
+  const location = useLocation()
+  const isHome = location.pathname === '/'
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [themeId, setThemeId] = useState<string>(() => {
@@ -51,8 +56,8 @@ function App() {
       '--theme-title-shadow',
       theme.titleShadow ?? '0 8px 32px rgba(0, 0, 0, 0.3)',
     )
-    root.style.setProperty('--reaction-wait', theme.reactionWait ?? DEFAULT_REACTION_WAIT)
-    root.style.setProperty('--reaction-go', theme.reactionGo ?? DEFAULT_REACTION_GO)
+    root.style.setProperty('--accent-1', theme.accent1 ?? DEFAULT_ACCENT_1)
+    root.style.setProperty('--accent-2', theme.accent2 ?? DEFAULT_ACCENT_2)
     localStorage.setItem(THEME_KEY, theme.id)
   }, [theme])
 
@@ -154,26 +159,29 @@ function App() {
         </Link>
       </div>
 
-      <div className="top-right-cluster">
-        {user && points !== null && (
-          <div className="points-badge" aria-label="Points balance">
-            <span className="points-badge-label">Points</span>
-            <span className="points-badge-value">{points.toLocaleString()}</span>
-          </div>
-        )}
-        <Link to="/shop" className="nav-button" aria-label="Shop">
-          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-            <path
-              d="M5 8h14l-1.4 11.2A2 2 0 0 1 15.6 21H8.4a2 2 0 0 1-2-1.8L5 8zM9 8V6a3 3 0 0 1 6 0v2"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </Link>
-      </div>
+      {isHome && (
+        <div className="top-right-cluster">
+          <DailyBonus />
+          {user && points !== null && (
+            <div className="points-badge" aria-label="Points balance">
+              <span className="points-badge-label">Points</span>
+              <span className="points-badge-value">{points.toLocaleString()}</span>
+            </div>
+          )}
+          <Link to="/shop" className="nav-button" aria-label="Shop">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path
+                d="M5 8h14l-1.4 11.2A2 2 0 0 1 15.6 21H8.4a2 2 0 0 1-2-1.8L5 8zM9 8V6a3 3 0 0 1 6 0v2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </Link>
+        </div>
+      )}
 
       <div
         className={`sidebar-backdrop ${sidebarOpen ? 'is-open' : ''}`}
@@ -220,7 +228,7 @@ function App() {
                 <li key={t.id}>
                   <button
                     type="button"
-                    className={`theme-option ${selected ? 'is-selected' : ''} ${locked ? 'is-locked' : ''}`}
+                    className={`theme-option ${selected ? 'is-selected' : ''} ${locked ? 'is-locked' : ''} ${t.rarity ? `rarity-${t.rarity}` : ''}`}
                     onClick={() => !locked && selectTheme(t.id)}
                     aria-pressed={selected}
                     aria-disabled={locked}
@@ -232,6 +240,14 @@ function App() {
                     }
                   >
                     <span className="theme-name">{locked ? '???' : t.name}</span>
+                    {t.rarity && (
+                      <span
+                        className={`theme-rarity-badge rarity-${t.rarity}`}
+                        aria-label={rarityLabel(t.rarity)}
+                      >
+                        <RarityIcon rarity={t.rarity} />
+                      </span>
+                    )}
                     {locked && (
                       <span className="theme-lock" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="12" height="12">
@@ -264,6 +280,7 @@ function App() {
           }
         />
         <Route path="/games/reaction" element={<ReactionGame />} />
+        <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
       </Routes>
     </div>
   )

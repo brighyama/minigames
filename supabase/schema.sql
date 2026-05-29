@@ -7,21 +7,27 @@
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.profiles (
-  user_id          uuid primary key references auth.users(id) on delete cascade,
-  username         text unique,
+  user_id             uuid primary key references auth.users(id) on delete cascade,
+  username            text unique,
   -- theme_id is null on a brand-new account so the client can decide
   -- whether to seed it from the user's existing local preference.
-  theme_id         text,
-  unlocks          text[] not null default array[]::text[],
-  points           int  not null default 0,
-  lifetime_points  int  not null default 0,
-  updated_at       timestamptz not null default now()
+  theme_id            text,
+  unlocks             text[] not null default array[]::text[],
+  points              int  not null default 0,
+  lifetime_points     int  not null default 0,
+  last_daily_claim    timestamptz,
+  best_reaction_avg   int,                       -- lowest avg ms over 5; null = no record
+  aim_high_score      int  not null default 0,   -- most circles in a 20s round
+  updated_at          timestamptz not null default now()
 );
 
 -- Additive migrations for projects that ran an earlier version of this file.
-alter table public.profiles add column if not exists username        text unique;
-alter table public.profiles add column if not exists points          int  not null default 0;
-alter table public.profiles add column if not exists lifetime_points int  not null default 0;
+alter table public.profiles add column if not exists username           text unique;
+alter table public.profiles add column if not exists points             int  not null default 0;
+alter table public.profiles add column if not exists lifetime_points    int  not null default 0;
+alter table public.profiles add column if not exists last_daily_claim   timestamptz;
+alter table public.profiles add column if not exists best_reaction_avg  int;
+alter table public.profiles add column if not exists aim_high_score     int  not null default 0;
 
 alter table public.profiles enable row level security;
 
@@ -134,3 +140,131 @@ end;
 $$;
 
 grant execute on function public.spend_points(int) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Daily bonus: 100 points, callable once every 24 hours. Server-enforced
+-- cooldown — clients cannot fabricate an early claim.
+-- Returns one row: (claimed, next_at, awarded).
+--   claimed = true  -> points were just awarded
+--   claimed = false -> still on cooldown; next_at = when it unlocks
+-- ---------------------------------------------------------------------------
+
+create or replace function public.claim_daily_points()
+returns table (claimed boolean, next_at timestamptz, awarded int)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  last_claim timestamptz;
+  cooldown   interval := interval '24 hours';
+  award      int := 100;
+begin
+  select last_daily_claim into last_claim
+    from public.profiles
+   where user_id = auth.uid();
+
+  if last_claim is not null and (now() - last_claim) < cooldown then
+    return query select false, last_claim + cooldown, 0;
+    return;
+  end if;
+
+  update public.profiles
+     set points           = points + award,
+         lifetime_points  = lifetime_points + award,
+         last_daily_claim = now(),
+         updated_at       = now()
+   where user_id = auth.uid();
+
+  return query select true, now() + cooldown, award;
+end;
+$$;
+
+grant execute on function public.claim_daily_points() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Per-game high scores: write only if better than the current record.
+-- Returns the new effective best (unchanged if not improved).
+-- ---------------------------------------------------------------------------
+
+create or replace function public.update_reaction_best(avg_ms int)
+returns int
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+begin
+  if avg_ms is null or avg_ms <= 0 then
+    raise exception 'avg_ms must be positive';
+  end if;
+  select best_reaction_avg into current_best
+    from public.profiles where user_id = auth.uid();
+
+  if current_best is null or avg_ms < current_best then
+    update public.profiles
+       set best_reaction_avg = avg_ms, updated_at = now()
+     where user_id = auth.uid();
+    return avg_ms;
+  end if;
+  return current_best;
+end;
+$$;
+grant execute on function public.update_reaction_best(int) to authenticated;
+
+create or replace function public.update_aim_high_score(score int)
+returns int
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+begin
+  if score is null or score < 0 then
+    raise exception 'score must be non-negative';
+  end if;
+  select aim_high_score into current_best
+    from public.profiles where user_id = auth.uid();
+
+  if score > current_best then
+    update public.profiles
+       set aim_high_score = score, updated_at = now()
+     where user_id = auth.uid();
+    return score;
+  end if;
+  return current_best;
+end;
+$$;
+grant execute on function public.update_aim_high_score(int) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Per-game leaderboards: same shape as get_leaderboard_total, public-read.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.get_leaderboard_reaction(lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.best_reaction_avg asc) as int) as rank,
+    p.username,
+    p.best_reaction_avg as score
+  from public.profiles p
+  where p.username is not null and p.best_reaction_avg is not null
+  order by p.best_reaction_avg asc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_reaction(int) to anon, authenticated;
+
+create or replace function public.get_leaderboard_aim(lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.aim_high_score desc) as int) as rank,
+    p.username,
+    p.aim_high_score as score
+  from public.profiles p
+  where p.username is not null and p.aim_high_score > 0
+  order by p.aim_high_score desc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_aim(int) to anon, authenticated;

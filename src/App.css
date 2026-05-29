@@ -314,6 +314,55 @@
   pointer-events: none;
 }
 
+/* ---------- Rarity glow (applies to sidebar tiles + shop cards) ---------- */
+
+.theme-option.rarity-blue {
+  background: #4ea1ff;
+  filter: drop-shadow(0 0 8px rgba(78, 161, 255, 0.6));
+}
+.theme-option.rarity-purple {
+  background: #b86bff;
+  filter: drop-shadow(0 0 8px rgba(184, 107, 255, 0.6));
+}
+.theme-option.rarity-red {
+  background: #ff5b5b;
+  filter: drop-shadow(0 0 8px rgba(255, 91, 91, 0.6));
+}
+.theme-option.rarity-gold {
+  background: #ffd76b;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 100, 0.7));
+}
+
+.theme-option.rarity-blue::before,
+.theme-option.rarity-purple::before,
+.theme-option.rarity-red::before,
+.theme-option.rarity-gold::before {
+  inset: 2px;
+}
+
+/* Tiny corner badge on sidebar tile */
+.theme-rarity-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.theme-rarity-badge .rarity-symbol {
+  width: 9px;
+  height: 9px;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.7));
+}
+
+.theme-rarity-badge.rarity-blue   { color: #c1deff; }
+.theme-rarity-badge.rarity-purple { color: #e3c9ff; }
+.theme-rarity-badge.rarity-red    { color: #ffcaca; }
+.theme-rarity-badge.rarity-gold   { color: #ffeaab; }
+
 /* ---------- Auth panel ---------- */
 
 .auth-empty {
@@ -545,9 +594,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 28px;
-  min-height: 200px;
+  padding: 0;
+
+  aspect-ratio: 4 / 5;
+  min-height: 260px;
 
   /* Outer layer = gradient border, painted with the active theme. */
   background: linear-gradient(135deg, var(--bg-start), var(--bg-stop));
@@ -556,28 +606,12 @@
   clip-path: var(--shape-diagonal);
 
   filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4));
+  text-decoration: none;
+  overflow: hidden;
 
   transition:
     transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
     filter 0.35s ease;
-}
-
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  /* Dark, mostly-opaque fill that lets a sliver of background bleed through. */
-  background: rgba(12, 10, 22, 0.82);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  clip-path: var(--shape-diagonal);
-  z-index: 0;
-  transition: background 0.35s ease;
-}
-
-.card > * {
-  position: relative;
-  z-index: 1;
 }
 
 .card:hover {
@@ -585,32 +619,46 @@
   filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.5));
 }
 
-.card:hover::before {
-  background: rgba(20, 16, 34, 0.78);
+/* Top 80%: image (or themed placeholder gradient). */
+.card-image {
+  position: relative;
+  flex: 4;
+  margin: 2px 2px 0 2px;
+
+  background-color: rgba(12, 10, 22, 0.5);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-.card-emoji {
-  font-size: 36px;
-  line-height: 1;
+/* Bottom 20%: game name strip. */
+.card-footer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  margin: 0 2px 2px 2px;
+
+  background: rgba(12, 10, 22, 0.88);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .card-title {
   font-family: var(--theme-font, inherit);
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--theme-text, #ffffff);
-  letter-spacing: -0.01em;
-}
-
-.card-desc {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.5;
+  text-align: center;
+  margin: 0;
 }
 
 .card-soon {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
 .card-soon:hover {
@@ -620,16 +668,16 @@
 
 .card-badge {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   z-index: 2;
   padding: 4px 10px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.5);
   clip-path: var(--shape-octagon-sm);
 }
 
@@ -643,6 +691,72 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.daily-bonus {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 124px;
+  padding: 11px 14px;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  border-radius: 0;
+  clip-path: var(--shape-octagon-sm);
+  isolation: isolate;
+
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.daily-bonus::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  background: rgba(20, 18, 32, 0.6);
+  clip-path: var(--shape-octagon-sm);
+  z-index: -1;
+}
+
+.daily-bonus.is-available {
+  background: linear-gradient(135deg, #ffd76b, #ff8a3a);
+}
+
+.daily-bonus.is-available::before {
+  background: rgba(20, 18, 32, 0.72);
+}
+
+.daily-bonus.is-available:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.daily-bonus.is-available:hover:not(:disabled)::before {
+  background: rgba(28, 22, 40, 0.6);
+}
+
+.daily-bonus.is-cooldown {
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.daily-bonus:disabled {
+  cursor: wait;
+  opacity: 0.85;
+}
+
+.daily-bonus-text {
+  font-size: 13px;
 }
 
 .points-badge {
@@ -770,6 +884,19 @@
 
 .back-link:hover {
   color: #ffffff;
+}
+
+.leaderboard-banner {
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 215, 100, 0.14);
+  border: 1px solid rgba(255, 215, 100, 0.35);
+  border-radius: 0;
+  clip-path: var(--shape-octagon-sm);
+  text-align: center;
 }
 
 .leaderboards-grid {
@@ -1045,4 +1172,64 @@
   color: #b8ffd1;
   background: rgba(60, 220, 130, 0.12);
   opacity: 1;
+}
+
+/* Tag stack (rarity + price/owned) on the right of the shop card head */
+.shop-card-tags {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.shop-card-rarity {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 9px;
+  clip-path: var(--shape-octagon-sm);
+}
+
+.shop-card-rarity .rarity-symbol {
+  width: 13px;
+  height: 13px;
+}
+
+.shop-card-rarity.rarity-blue {
+  background: rgba(78, 161, 255, 0.22);
+  color: #c1deff;
+}
+.shop-card-rarity.rarity-purple {
+  background: rgba(184, 107, 255, 0.22);
+  color: #e3c9ff;
+}
+.shop-card-rarity.rarity-red {
+  background: rgba(255, 91, 91, 0.22);
+  color: #ffcaca;
+}
+.shop-card-rarity.rarity-gold {
+  background: rgba(255, 215, 100, 0.25);
+  color: #ffeaab;
+}
+
+/* Rarity-tinted "border" + outer glow on shop cards */
+.shop-card.rarity-blue {
+  background: linear-gradient(135deg, #6db2ff, #2d7ce6);
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
+          drop-shadow(0 0 16px rgba(78, 161, 255, 0.45));
+}
+.shop-card.rarity-purple {
+  background: linear-gradient(135deg, #c789ff, #7a3dde);
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
+          drop-shadow(0 0 16px rgba(184, 107, 255, 0.45));
+}
+.shop-card.rarity-red {
+  background: linear-gradient(135deg, #ff7878, #d63030);
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
+          drop-shadow(0 0 16px rgba(255, 91, 91, 0.45));
+}
+.shop-card.rarity-gold {
+  background: linear-gradient(135deg, #ffe18a, #ffac3a);
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
+          drop-shadow(0 0 18px rgba(255, 215, 100, 0.55));
 }
