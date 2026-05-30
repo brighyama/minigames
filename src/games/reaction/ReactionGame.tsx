@@ -18,12 +18,6 @@ const ROLLING_WINDOW = 5
  *   each 10 ms above  → -1 point
  *   floor              → 5 (reached at avg ≥ 300 ms)
  */
-function pointsForAverage(avg: number): number {
-  if (avg <= 250) return 10
-  const stepsAbove = Math.floor((avg - 250) / 10)
-  return Math.max(5, 10 - stepsAbove)
-}
-
 export function ReactionGame() {
   const { user } = useAuth()
   const toast = useToast()
@@ -103,14 +97,14 @@ export function ReactionGame() {
       if (timerRef.current !== null) window.clearTimeout(timerRef.current)
       const best = bestAvgRef.current
       if (best === null || !userIdRef.current || !supabase) return
-      const amount = pointsForAverage(best)
-      void supabase.rpc('add_points', { amount }).then((res) => {
+      // The server derives the (bounded) reward from the reported avg.
+      void supabase.rpc('award_reaction', { best_avg_ms: Math.round(best) }).then((res) => {
         if (res.error) {
-          console.error('[reaction] add_points failed:', res.error)
+          console.error('[reaction] award_reaction failed:', res.error)
           toast.show(`Couldn't save points: ${res.error.message}`, { tone: 'error' })
           return
         }
-        toast.show(`+${amount} points`, { tone: 'success' })
+        toast.show(`+${res.data} points`, { tone: 'success' })
         window.dispatchEvent(new CustomEvent('points-changed'))
       })
     }

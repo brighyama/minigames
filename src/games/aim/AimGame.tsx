@@ -59,10 +59,6 @@ function randomCirclePos(): Circle {
  *   5 (for completing at least one full 20s round)
  *   + 1 per 2 circles clicked
  */
-function pointsForScore(score: number): number {
-  return 5 + Math.floor(score / 2)
-}
-
 export function AimGame({ rarity }: Props) {
   const { user } = useAuth()
   const toast = useToast()
@@ -177,14 +173,14 @@ export function AimGame({ rarity }: Props) {
     return () => {
       const best = bestSessionScoreRef.current
       if (best === null || !userIdRef.current || !supabase) return
-      const amount = pointsForScore(best)
-      void supabase.rpc('add_points', { amount }).then((res) => {
+      // The server derives the (bounded) reward from the reported score.
+      void supabase.rpc('award_aim', { best_score: best }).then((res) => {
         if (res.error) {
-          console.error('[aim] add_points failed:', res.error)
+          console.error('[aim] award_aim failed:', res.error)
           toast.show(`Couldn't save points: ${res.error.message}`, { tone: 'error' })
           return
         }
-        toast.show(`+${amount} points`, { tone: 'success' })
+        toast.show(`+${res.data} points`, { tone: 'success' })
         window.dispatchEvent(new CustomEvent('points-changed'))
       })
     }

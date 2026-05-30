@@ -61,29 +61,44 @@ export function BlackjackGame() {
     }
   }, [user])
 
-  // ---- Server mirroring (optimistic) ------------------------------------
+  // ---- Server mirroring (escrowed, server-authoritative settlement) ------
+  // Stakes are deducted server-side the instant a bet is committed (so a
+  // losing hand can't be abandoned to dodge the loss); the payout is capped to
+  // the real accumulated wager on settle. RPC calls are serialized through a
+  // promise chain so settle always lands after every stake of the round.
   const isLive = !!user && !!supabase
+  const opChain = useRef<Promise<unknown>>(Promise.resolve())
 
-  /** Mirror a stake to the server. Fire-and-forget; local check gates play. */
-  const serverSpend = (amount: number) => {
-    if (!isLive || amount <= 0) return
-    void supabase!.rpc('spend_points', { amount }).then(({ error }) => {
-      if (error) console.error('[blackjack] spend_points failed', error)
-    })
+  const queueBjRpc = (
+    run: () => PromiseLike<{ error: unknown }>,
+  ): Promise<unknown> => {
+    opChain.current = opChain.current
+      .then(() => run())
+      .then((res) => {
+        if (res?.error) console.error('[blackjack] rpc failed', res.error)
+      })
+      .catch((err) => console.error('[blackjack] rpc threw', err))
+    return opChain.current
   }
 
-  /** Mirror a payout + record the round's net for casino stats/leaderboards. */
-  const serverAwardAndRecord = (payout: number, net: number) => {
+  /** First stake of a round (the deal): resets the server escrow accumulator. */
+  const serverDealStake = (amount: number) => {
+    if (!isLive || amount <= 0) return
+    queueBjRpc(() => supabase!.rpc('blackjack_deal_stake', { amount }))
+  }
+
+  /** Additional in-round stake: double / split / insurance. */
+  const serverAddStake = (amount: number) => {
+    if (!isLive || amount <= 0) return
+    queueBjRpc(() => supabase!.rpc('blackjack_add_stake', { amount }))
+  }
+
+  /** Settle the round; server caps the payout to 2.5x the accumulated wager. */
+  const serverSettle = (payout: number) => {
     if (!isLive) return
-    if (payout > 0) {
-      void supabase!.rpc('add_points', { amount: payout }).then(({ error }) => {
-        if (error) console.error('[blackjack] add_points failed', error)
-      })
-    }
-    void supabase!.rpc('record_casino_result', { net }).then(({ error }) => {
-      if (error) console.error('[blackjack] record_casino_result failed', error)
-      window.dispatchEvent(new CustomEvent('points-changed'))
-    })
+    void queueBjRpc(() => supabase!.rpc('blackjack_settle', { payout })).then(() =>
+      window.dispatchEvent(new CustomEvent('points-changed')),
+    )
   }
 
   const activeHand = playerHands[activeIdx]
@@ -131,7 +146,7 @@ export function BlackjackGame() {
     const startingHand = makeHand([p1, p2], bet)
 
     setBalance((b) => b - bet)
-    serverSpend(bet)
+    serverDealStake(bet)
     setPlayerHands([startingHand])
     setDealer([d1, d2])
     setActiveIdx(0)
@@ -157,7 +172,7 @@ export function BlackjackGame() {
       const half = Math.floor(bet / 2)
       if (half > balance) return
       setBalance((b) => b - half)
-      serverSpend(half)
+      serverAddStake(half)
       setInsuranceBet(half)
     }
     // After insurance decision, if dealer has BJ, end immediately.
@@ -204,7 +219,7 @@ export function BlackjackGame() {
   const doubleDown = () => {
     if (!activeHand || !canDouble(activeHand, balance)) return
     setBalance((b) => b - activeHand.bet)
-    serverSpend(activeHand.bet)
+    serverAddStake(activeHand.bet)
     const card = draw()
     const newCards = [...activeHand.cards, card]
     const busted = isBust(newCards)
@@ -223,7 +238,7 @@ export function BlackjackGame() {
   const split = () => {
     if (!activeHand || !canSplit(activeHand, balance)) return
     setBalance((b) => b - activeHand.bet)
-    serverSpend(activeHand.bet)
+    serverAddStake(activeHand.bet)
     const [c1, c2] = activeHand.cards
     const isAces = c1.rank === 'A'
     const draw1 = draw()
@@ -281,10 +296,10 @@ export function BlackjackGame() {
     setResults(settled)
     setPhase('settled')
 
-    // Mirror to the server: award the total return, record the round's net
-    // (return − everything staked this round) for casino stats.
-    const wagered = hands.reduce((s, h) => s + h.bet, 0) + insuranceBet
-    serverAwardAndRecord(payouts, payouts - wagered)
+    // Settle server-side: the escrow already holds everything staked this
+    // round, so we only send the total return. The server caps it to 2.5x the
+    // wager and records the casino net.
+    serverSettle(payouts)
   }
 
   const newRound = () => {
