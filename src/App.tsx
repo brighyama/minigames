@@ -21,6 +21,8 @@ import { AimGame } from './games/aim/AimGame'
 import { BlackjackGame } from './games/blackjack/BlackjackGame'
 import { RouletteGame } from './games/roulette/RouletteGame'
 import { Game2048 } from './games/g2048/Game2048'
+import { ChessGame } from './games/chess/ChessGame'
+import { applyChessPalette } from './games/chess/palette'
 
 const THEME_KEY = 'minigames:theme'
 const DECK_KEY = 'minigames:deck'
@@ -85,6 +87,9 @@ function App() {
 
     // 2048 tiles: unlockable themes get a unique ramp; defaults use CSS colors.
     applyTilePalette(root, theme.id)
+    // Chess board: default themes use classic browns; unlockables get a
+    // theme-specific board palette.
+    applyChessPalette(root, theme.id)
 
     localStorage.setItem(THEME_KEY, theme.id)
   }, [theme])
@@ -377,6 +382,7 @@ function App() {
         <Route path="/games/reaction" element={<ReactionGame />} />
         <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
         <Route path="/games/2048" element={<Game2048 />} />
+        <Route path="/games/chess" element={<ChessGame />} />
         <Route path="/games/blackjack" element={<BlackjackGame />} />
         <Route path="/games/roulette" element={<RouletteGame />} />
       </Routes>

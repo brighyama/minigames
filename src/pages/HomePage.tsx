@@ -45,6 +45,7 @@ const games: Game[] = [
   {
     id: 'chess',
     name: 'Chess',
+    path: '/games/chess',
     placeholderGradient: 'linear-gradient(135deg, #5e3a1c 0%, #d4b08c 100%)',
   },
 ]
