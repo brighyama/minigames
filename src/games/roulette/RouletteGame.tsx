@@ -212,10 +212,10 @@ export function RouletteGame() {
   const statusText =
     phase === 'betting'
       ? timeLeft > 0
-        ? `Place your bets — ${timeLeft}s`
+        ? `Place your bets: ${timeLeft}s`
         : 'No more bets'
       : phase === 'spinning'
-        ? 'No more bets — spinning'
+        ? 'No more bets. Spinning'
         : winning !== null
           ? `${winning} ${colorOf(winning).toUpperCase()}`
           : ''
@@ -331,8 +331,8 @@ export function RouletteGame() {
 
       <div className="rl-note">
         {user
-          ? 'Spins with bets placed are settled by the server using your real points.'
-          : 'Playing with a demo bankroll — sign in to wager your real points.'}
+          ? ''
+          : 'Playing with a demo bankroll. Sign in to wager your real points.'}
       </div>
     </main>
   )

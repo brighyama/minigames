@@ -259,6 +259,14 @@
   stroke: var(--chess-white-stroke, rgba(30, 18, 10, 0.72));
   stroke-width: 1.7;
   stroke-linejoin: round;
+  /* Keep the outline a constant screen width across the differing viewBoxes
+     each piece style uses (64 for geometric/glyph, 512 for classic). */
+  vector-effect: non-scaling-stroke;
+}
+
+.chess-piece-glyph text {
+  font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Apple Symbols', 'Symbola', sans-serif;
+  font-size: 56px;
 }
 
 .chess-square:has([aria-label^='Black']) {

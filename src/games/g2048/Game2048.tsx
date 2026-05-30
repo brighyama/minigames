@@ -51,6 +51,9 @@ export function Game2048() {
   const currentTile = highestTile(board)
 
   const submittedRef = useRef(false)
+  // Pending exit-submit timer (see the unmount effect). Lets StrictMode's
+  // simulated unmount cancel itself before it fires.
+  const unmountSubmitRef = useRef<number | null>(null)
   // The solver instance + a flag marking whether the AI touched this game.
   // AI-assisted games are never submitted to the leaderboard or rewarded.
   const solverRef = useRef(createSolver())
@@ -85,10 +88,12 @@ export function Game2048() {
   const submitTopTile = useCallback(
     (topTile: number) => {
       if (submittedRef.current) return
-      submittedRef.current = true
       // Don't rank or reward AI-assisted runs — keeps the leaderboard honest.
       if (aiUsedRef.current) return
       if (topTile <= 0 || !userIdRef.current || !supabase) return
+      // Mark submitted only once we actually fire, so a no-op call (auth not
+      // loaded yet, or StrictMode's simulated unmount) can't poison a later one.
+      submittedRef.current = true
       void supabase
         .rpc('submit_2048_result', { top_tile: topTile })
         .then((res) => {
@@ -184,8 +189,20 @@ export function Game2048() {
   // Game over also submits (the effect above); submittedRef makes sure whichever
   // happens first wins and we never double-submit. Starting a new game does
   // not submit here — that's handled by restart resetting the guards.
+  //
+  // StrictMode simulates an unmount/remount on mount, which would otherwise fire
+  // this against the *initial* board and poison the guard. We schedule the
+  // submit on a 0ms timer in the cleanup and cancel it if a setup runs straight
+  // after (the simulated remount), so only a real unmount actually submits.
   useEffect(() => {
-    return () => submitTopTile(highestTile(boardRef.current))
+    if (unmountSubmitRef.current != null) {
+      window.clearTimeout(unmountSubmitRef.current)
+      unmountSubmitRef.current = null
+    }
+    return () => {
+      const tile = highestTile(boardRef.current)
+      unmountSubmitRef.current = window.setTimeout(() => submitTopTile(tile), 0)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -222,14 +239,14 @@ export function Game2048() {
             <div className="g2048-score-box">
               <span className="g2048-score-label">Best</span>
               <span className="g2048-score-value">
-                {best != null ? Math.max(best, currentTile).toLocaleString() : '—'}
+                {best != null ? Math.max(best, currentTile).toLocaleString() : '-'}
               </span>
             </div>
           </div>
         </div>
 
         <p className="g2048-hint">
-          Use arrow keys or WASD — or swipe — to merge tiles. Reach 2048!
+          use arrow keys, wasd, or swipe to merge tiles
         </p>
 
         <div
@@ -249,19 +266,19 @@ export function Game2048() {
           {(over || won) && (
             <div className="g2048-overlay">
               <div className="g2048-overlay-text">
-                {won ? 'You made 2048!' : 'Game over'}
+                {won ? 'you made 2048!' : 'game over'}
               </div>
               <div className="g2048-overlay-score">
-                Top tile {currentTile.toLocaleString()}
+                top tile {currentTile.toLocaleString()}
               </div>
               <div className="g2048-overlay-actions">
                 {won && (
                   <button className="g2048-btn" onClick={continuePlaying}>
-                    Keep going
+                    keep going
                   </button>
                 )}
                 <button className="g2048-btn g2048-btn-primary" onClick={restart}>
-                  New game
+                  new game
                 </button>
               </div>
             </div>
@@ -282,21 +299,21 @@ export function Game2048() {
             }
             aria-pressed={autoSolve}
           >
-            {autoSolve ? '■ Stop AI' : '▶ Watch AI'}
+            {autoSolve ? '■ stop AI' : '▶ watch AI'}
           </button>
           <button className="g2048-btn g2048-btn-primary" onClick={restart}>
-            New game
+            new game
           </button>
         </div>
       </div>
 
       <div className="g2048-note">
         {autoSolve ? (
-          <>Solver: {solverRef.current.name} — AI-assisted games aren't ranked.</>
+          <>solver: {solverRef.current.name}. AI-assisted games aren't ranked</>
         ) : !user ? (
-          <>Sign in to save your high score to the leaderboard.</>
+          <>sign in to save your high score to the leaderboard</>
         ) : (
-          <>Tip: try “Watch AI” to see the {solverRef.current.name} solver play.</>
+          <>try “watch AI” to see the {solverRef.current.name} solver play</>
         )}
       </div>
     </main>

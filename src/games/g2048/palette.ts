@@ -62,6 +62,97 @@ const SPECS: Record<string, PaletteSpec> = {
     ],
     super: '#ffffff',
   },
+
+  // --- Green tier ---
+  // Aqua — pale cyan diving into teal and deep blue, bright aqua goal.
+  aqua: {
+    tiles: [
+      '#ecfeff', '#cffafe', '#a5f3fc', '#67e8f9', '#22d3ee',
+      '#06b6d4', '#0891b2', '#0e7490', '#155e75', '#164e63', '#8ff7e6',
+    ],
+    super: '#a5f3fc',
+  },
+  // Sakura — blossom pinks deepening to plum, soft rose goal.
+  sakura: {
+    tiles: [
+      '#fff1f5', '#ffe4ec', '#fbcfe0', '#f9a8c9', '#f472a6',
+      '#ec4899', '#db2777', '#be185d', '#9d174d', '#5e2750', '#ffc2d1',
+    ],
+    super: '#ffe4ec',
+  },
+
+  // --- Blue tier ---
+  // Sunset — warm peach → orange → magenta dusk, golden goal.
+  sunset: {
+    tiles: [
+      '#fff1e6', '#ffe0c2', '#ffc89e', '#ffa86b', '#ff8c42',
+      '#fb6a1c', '#ea3a6f', '#d4145a', '#a50d52', '#6e0a44', '#ffd36e',
+    ],
+    super: '#ffe9c2',
+  },
+  // Glacier — pale ice blues sinking into slate and deep navy, icy goal.
+  glacier: {
+    tiles: [
+      '#f0f9ff', '#e0f2fe', '#bae6fd', '#7dd3fc', '#38bdf8',
+      '#0ea5e9', '#0284c7', '#2c5364', '#1e3a4c', '#0f2027', '#8fe3ff',
+    ],
+    super: '#bae6fd',
+  },
+
+  // --- Purple tier ---
+  // Amethyst — lavender to deep violet, luminous orchid goal.
+  amethyst: {
+    tiles: [
+      '#f5f3ff', '#ede9fe', '#ddd6fe', '#c4b5fd', '#a78bfa',
+      '#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6', '#2f0743', '#c9a3ff',
+    ],
+    super: '#ddd6fe',
+  },
+  // Verdant — mint to deep forest emerald, vivid spring-green goal.
+  verdant: {
+    tiles: [
+      '#ecfdf5', '#d1fae5', '#a7f3d0', '#6ee7b7', '#34d399',
+      '#10b981', '#059669', '#237a57', '#065f46', '#093028', '#7dffb0',
+    ],
+    super: '#a7f3d0',
+  },
+
+  // --- Red tier ---
+  // Synthwave — deep violet base striped with neon purple, magenta and cyan;
+  // hot-pink goal. Deliberately electric.
+  synthwave: {
+    tiles: [
+      '#1f1147', '#2d1a5e', '#3b2370', '#5b2a9e', '#7c3aed',
+      '#b026ff', '#e0218a', '#05d9e8', '#00b3c4', '#b3134f', '#ff2a6d',
+    ],
+    super: '#05d9e8',
+  },
+  // Inferno — charred embers climbing through fire to a molten-yellow goal.
+  inferno: {
+    tiles: [
+      '#241010', '#3a1610', '#571c0d', '#79220b', '#9c2c08',
+      '#c43c06', '#ef5305', '#ff6d00', '#ff8c00', '#ffaa00', '#ffd000',
+    ],
+    super: '#fff0a3',
+  },
+
+  // --- Gold tier ---
+  // Celestial — cosmic indigo ascending through twilight into warm gold.
+  celestial: {
+    tiles: [
+      '#15103f', '#20184f', '#2c2266', '#3d3088', '#5648ab',
+      '#7a5fd0', '#b08fe0', '#d4af37', '#e0bc4e', '#f0cf6e', '#ffe7a3',
+    ],
+    super: '#fff3cf',
+  },
+  // Eclipse — black to violet with a piercing cyan flare midway, orchid goal.
+  eclipse: {
+    tiles: [
+      '#111118', '#1a1422', '#241a30', '#321f45', '#4a2a6b',
+      '#6336a0', '#7b4397', '#00f0ff', '#00c4d4', '#5a2a8c', '#b06bff',
+    ],
+    super: '#00f0ff',
+  },
 }
 
 /** Every CSS variable this module manages, so we can fully clear it on switch. */

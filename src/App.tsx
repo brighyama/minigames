@@ -75,6 +75,10 @@ function App() {
     root.style.setProperty('--accent-1', theme.accent1 ?? DEFAULT_ACCENT_1)
     root.style.setProperty('--accent-2', theme.accent2 ?? DEFAULT_ACCENT_2)
 
+    // Game-card border: default themes get a neutral gray; unlockable themes
+    // get their own accent so the edge pops in their palette.
+    root.style.setProperty('--card-edge', theme.locked ? (theme.accent2 ?? DEFAULT_ACCENT_2) : '#9ca3af')
+
     // Aim trainer circle: plain white for the default themes; accent-tinted for
     // unlockable themes (the only ones with `locked`).
     if (theme.locked) {
@@ -278,7 +282,7 @@ function App() {
                     onClick={() => !locked && selectTheme(t.id)}
                     aria-pressed={selected}
                     aria-disabled={locked}
-                    title={locked ? `Locked — buy in shop` : t.name}
+                    title={locked ? `locked. buy in shop` : t.name}
                     style={
                       {
                         '--swatch': `linear-gradient(135deg, ${t.start}, ${t.stop})`,
@@ -332,7 +336,7 @@ function App() {
                     onClick={() => !locked && selectDeck(d.id)}
                     aria-pressed={selected}
                     aria-disabled={locked}
-                    title={locked ? `Locked — buy in shop` : d.name}
+                    title={locked ? `locked. buy in shop` : d.name}
                     style={
                       {
                         '--swatch': swatch,

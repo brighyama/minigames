@@ -31,7 +31,7 @@ export const cardDecks: CardDeck[] = [
   // -------- Default --------
   {
     id: 'classic',
-    name: 'Classic',
+    name: 'classic',
     face: '#ffffff',
     red: '#c5283d',
     black: '#1a1a1a',
@@ -42,7 +42,7 @@ export const cardDecks: CardDeck[] = [
   // -------- Locked decks --------
   {
     id: 'mono',
-    name: 'Mono',
+    name: 'mono',
     face: '#0e0e12',
     red: '#e6e6e6',
     black: '#9aa0a6',
@@ -54,7 +54,7 @@ export const cardDecks: CardDeck[] = [
   },
   {
     id: 'neon',
-    name: 'Neon',
+    name: 'neon',
     face: '#0a0a18',
     red: '#ff3e8a',
     black: '#00ffd5',
@@ -67,7 +67,7 @@ export const cardDecks: CardDeck[] = [
   },
   {
     id: 'royal',
-    name: 'Royal',
+    name: 'royal',
     face: '#fff6e0',
     red: '#8b0a1a',
     black: '#1c1845',

@@ -3,9 +3,9 @@ import { Chess, type Color, type Move } from 'chess.js'
 export type EngineLevel = 'casual' | 'standard' | 'expert'
 
 export const ENGINE_LEVELS: Array<{ id: EngineLevel; name: string; description: string }> = [
-  { id: 'casual', name: 'Casual', description: 'Likes captures, checks, and promotions.' },
-  { id: 'standard', name: 'Standard', description: 'Looks one reply ahead.' },
-  { id: 'expert', name: 'Expert', description: 'Searches deeper and values position.' },
+  { id: 'casual', name: 'casual', description: 'likes captures, checks, and promotions' },
+  { id: 'standard', name: 'standard', description: 'looks one move ahead' },
+  { id: 'expert', name: 'expert', description: 'searches deeper and values position' },
 ]
 
 const PIECE_VALUE: Record<string, number> = {

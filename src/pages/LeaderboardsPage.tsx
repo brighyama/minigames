@@ -34,17 +34,17 @@ export function LeaderboardsPage() {
   // Show a banner if the player wouldn't appear in the leaderboards yet.
   const banner =
     user === null
-      ? 'Sign in and set a username to appear on the leaderboards.'
+      ? 'sign in and set a username to appear on the leaderboards.'
       : username === null
-        ? 'Set a username in Settings → Account to appear on the leaderboards.'
+        ? 'set a username in Settings → Account to appear on the leaderboards.'
         : null
 
   return (
     <main className="container">
       <BackButton />
       <header className="hero hero-compact">
-        <h1 className="title title-md">Leaderboards</h1>
-        <p className="subtitle">The best of the best, across every game.</p>
+        <h1 className="title title-md">leaderboards</h1>
+        <p className="subtitle">the best of the best</p>
       </header>
 
       {banner && <div className="leaderboard-banner">{banner}</div>}

@@ -23,17 +23,17 @@ type Game = {
 const games: Game[] = [
   {
     id: 'reaction',
-    name: 'Reaction Test',
+    name: 'reaction time',
     path: '/games/reaction',
     placeholderGradient:
-      'linear-gradient(135deg, #c0392b 0%, #f4f4f4 50%, #27ae60 100%)',
+      'linear-gradient(135deg, #c0392b 0%, #5c2620 49%, #f4f4f4 50%, #2e6b47 51%, #33b96b 100%)',
   },
   {
     id: 'aim-trainer',
-    name: 'Aim Trainer',
+    name: 'aim trainer',
     path: '/games/aim',
     placeholderGradient:
-      'radial-gradient(circle at 30% 30%, #6db2ff 0%, #2d4ea0 60%, #0e1a3a 100%)',
+      'radial-gradient(circle at 50% 50%, #fdfdfd 0%, #2d4ea0 60%, #0e1a3a 100%)',
   },
   {
     id: '2048',
@@ -44,7 +44,7 @@ const games: Game[] = [
   },
   {
     id: 'chess',
-    name: 'Chess',
+    name: 'chess',
     path: '/games/chess',
     placeholderGradient: 'linear-gradient(135deg, #5e3a1c 0%, #d4b08c 100%)',
   },
@@ -54,14 +54,14 @@ const games: Game[] = [
 const casinoGames: Game[] = [
   {
     id: 'blackjack',
-    name: 'Blackjack',
+    name: 'blackjack',
     path: '/games/blackjack',
     placeholderGradient:
       'radial-gradient(ellipse at 50% 40%, #1f7a4d 0%, #0c3a26 60%, #06140d 100%)',
   },
   {
     id: 'roulette',
-    name: 'Roulette',
+    name: 'roulette',
     path: '/games/roulette',
     placeholderGradient:
       'radial-gradient(circle at 50% 45%, #b8862b 0%, #7a1f2b 45%, #1c0c10 100%)',
@@ -74,14 +74,14 @@ function GameCard({ game }: { game: Game }) {
     : { background: game.placeholderGradient }
 
   const inner = (
-    <>
+    <div className="card-inner">
       <div className="card-image" style={imageStyle} aria-hidden="true">
         {!game.path && <span className="card-badge">Coming Soon</span>}
       </div>
       <div className="card-footer">
         <h2 className="card-title">{game.name}</h2>
       </div>
-    </>
+    </div>
   )
 
   return game.path ? (
@@ -100,7 +100,7 @@ export function HomePage() {
     <main className="container">
       <header className="hero">
         <h1 className="title">minigames</h1>
-        <p className="subtitle">A small collection of games to play in your browser.</p>
+        <p className="subtitle">a small collection of games to play in your browser</p>
       </header>
 
       <section className="grid" aria-label="Games">
@@ -110,7 +110,7 @@ export function HomePage() {
       </section>
 
       <section className="home-section" aria-labelledby="casino-heading">
-        <h2 id="casino-heading" className="home-section-title">Casino</h2>
+        <h2 id="casino-heading" className="home-section-title"></h2>
         <div className="grid">
           {casinoGames.map((game) => (
             <GameCard key={game.id} game={game} />

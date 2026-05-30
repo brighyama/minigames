@@ -79,7 +79,7 @@ export function DailyBonus() {
 
     const row: ClaimRow | undefined = Array.isArray(data) ? data[0] : undefined
     if (!row) {
-      toast.show('Unexpected response from server.', { tone: 'error' })
+      toast.show('unexpected response from server.', { tone: 'error' })
       return
     }
 
@@ -90,7 +90,7 @@ export function DailyBonus() {
     } else {
       // Server says still on cooldown — sync our timer to match.
       if (row.next_at) setNextAt(new Date(row.next_at))
-      toast.show('Already claimed today.', { tone: 'info' })
+      toast.show('already claimed today.', { tone: 'info' })
     }
   }
 
@@ -102,7 +102,7 @@ export function DailyBonus() {
         onClick={claim}
         disabled={busy}
         aria-label="Claim daily bonus"
-        title="Free 100 points — once every 24 hours"
+        title="free 100 points, once every 24 hours"
       >
         <svg
           viewBox="0 0 24 24"
@@ -130,7 +130,7 @@ export function DailyBonus() {
     <div
       className="daily-bonus is-cooldown"
       aria-label="Daily bonus on cooldown"
-      title="Daily bonus available again soon"
+      title="daily bonus available again soon"
     >
       <svg
         viewBox="0 0 24 24"

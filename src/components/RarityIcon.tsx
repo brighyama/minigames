@@ -44,7 +44,7 @@ export function RarityIcon({ rarity }: { rarity: Rarity }) {
 }
 
 export function rarityLabel(rarity: Rarity): string {
-  if (rarity === 'gold') return 'Exclusive'
+  if (rarity === 'gold') return 'exclusive'
   const count = STAR_COUNT[rarity]
   return `${count} star${count > 1 ? 's' : ''}`
 }

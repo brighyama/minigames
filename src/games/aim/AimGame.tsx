@@ -128,7 +128,7 @@ export function AimGame({ rarity }: Props) {
           .then((res) => {
             if (res.error) {
               console.error('[aim] update_aim_high_score failed:', res.error)
-              toast.show(`Couldn't save high score: ${res.error.message}`, {
+              toast.show(`couldn't save high score: ${res.error.message}`, {
                 tone: 'error',
               })
             }
@@ -177,7 +177,7 @@ export function AimGame({ rarity }: Props) {
       void supabase.rpc('award_aim', { best_score: best }).then((res) => {
         if (res.error) {
           console.error('[aim] award_aim failed:', res.error)
-          toast.show(`Couldn't save points: ${res.error.message}`, { tone: 'error' })
+          toast.show(`couldn't save points: ${res.error.message}`, { tone: 'error' })
           return
         }
         toast.show(`+${res.data} points`, { tone: 'success' })
@@ -286,13 +286,13 @@ export function AimGame({ rarity }: Props) {
 
           {phase === 'idle' && (
             <div className="aim-message">
-              <h1 className="aim-heading">Aim Trainer</h1>
+              <h1 className="aim-heading">aim trainer</h1>
               <p className="aim-sub">
-                Click as many circles as you can in 20 seconds.
+                click as many circles as you can in 20 seconds
               </p>
               {showBest && (
                 <p className="aim-best">
-                  Your best: <strong>{highScore}</strong>
+                  your best: <strong>{highScore}</strong>
                 </p>
               )}
               <p className="aim-cta">Click anywhere to start</p>
@@ -306,7 +306,7 @@ export function AimGame({ rarity }: Props) {
               {newBest && <p className="aim-new-best">New best!</p>}
               {highScore !== null && (
                 <p className="aim-best">
-                  Best: <strong>{highScore}</strong>
+                  best: <strong>{highScore}</strong>
                 </p>
               )}
               <p className="aim-cta">Click anywhere to play again</p>

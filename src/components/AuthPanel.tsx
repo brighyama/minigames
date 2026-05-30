@@ -10,7 +10,7 @@ export function AuthPanel() {
     return (
       <div className="auth-empty">
         <p>
-          Sign-in is not configured yet. Add your Supabase keys to{' '}
+          sign-in is not configured yet. add your Supabase keys to{' '}
           <code>.env.local</code> and restart the dev server.
         </p>
       </div>
@@ -18,7 +18,7 @@ export function AuthPanel() {
   }
 
   if (loading) {
-    return <div className="auth-empty">Loading…</div>
+    return <div className="auth-empty">loading…</div>
   }
 
   return user ? <SignedIn /> : <SignedOut />
@@ -49,7 +49,7 @@ function SignedOut() {
       } else {
         const { error } = await signUp(email, password)
         if (error) setError(error)
-        else setInfo('Account created. Check your inbox to confirm.')
+        else setInfo('account created. check your inbox to confirm.')
       }
     } finally {
       setSubmitting(false)
@@ -181,12 +181,12 @@ function UsernameForm() {
     if (error) {
       setError(
         error.includes('duplicate') || error.includes('unique')
-          ? 'That username is already taken.'
+          ? 'that username is already taken.'
           : error,
       )
     } else {
       setInitial(trimmed)
-      setInfo('Saved.')
+      setInfo('saved.')
     }
   }
 
@@ -233,15 +233,15 @@ function PasswordForm() {
     setError(null)
     setInfo(null)
     if (next.length < 6) {
-      setError('Password must be at least 6 characters.')
+      setError('password must be at least 6 characters.')
       return
     }
     if (next !== confirm) {
-      setError('Passwords do not match.')
+      setError('passwords do not match.')
       return
     }
     if (!supabase) {
-      setError('Auth is not configured.')
+      setError('auth is not configured.')
       return
     }
     setSubmitting(true)
@@ -252,7 +252,7 @@ function PasswordForm() {
     } else {
       setNext('')
       setConfirm('')
-      setInfo('Password updated.')
+      setInfo('password updated.')
     }
   }
 

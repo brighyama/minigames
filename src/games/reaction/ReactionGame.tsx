@@ -78,7 +78,7 @@ export function ReactionGame() {
           .then((res) => {
             if (res.error) {
               console.error('[reaction] update_reaction_best failed:', res.error)
-              toast.show(`Couldn't save best avg: ${res.error.message}`, {
+              toast.show(`couldn't save best avg: ${res.error.message}`, {
                 tone: 'error',
               })
             }
@@ -101,7 +101,7 @@ export function ReactionGame() {
       void supabase.rpc('award_reaction', { best_avg_ms: Math.round(best) }).then((res) => {
         if (res.error) {
           console.error('[reaction] award_reaction failed:', res.error)
-          toast.show(`Couldn't save points: ${res.error.message}`, { tone: 'error' })
+          toast.show(`couldn't save points: ${res.error.message}`, { tone: 'error' })
           return
         }
         toast.show(`+${res.data} points`, { tone: 'success' })
@@ -205,13 +205,13 @@ export function ReactionGame() {
       <div className="reaction-content">
         {phase === 'idle' && (
           <>
-            <h1 className="reaction-heading">Reaction Test</h1>
+            <h1 className="reaction-heading">reaction test</h1>
             <p className="reaction-sub">
-              When the screen changes color, click as fast as you can.
+              when the screen changes color, click as fast as you can.
             </p>
             {showBest && (
               <p className="reaction-best">
-                Your best avg: <strong>{highScore} ms</strong>
+                your best avg: <strong>{highScore} ms</strong>
               </p>
             )}
             <p className="reaction-cta">Click anywhere to start</p>
@@ -220,17 +220,17 @@ export function ReactionGame() {
 
         {phase === 'waiting' && (
           <>
-            <h1 className="reaction-heading">Wait for it…</h1>
-            <p className="reaction-sub">Click the moment the color changes.</p>
+            <h1 className="reaction-heading">wait for it…</h1>
+            <p className="reaction-sub">click the moment the color changes.</p>
           </>
         )}
 
-        {phase === 'ready' && <h1 className="reaction-heading">CLICK!</h1>}
+        {phase === 'ready' && <h1 className="reaction-heading">GO</h1>}
 
         {phase === 'tooEarly' && (
           <>
-            <h1 className="reaction-heading">Too soon</h1>
-            <p className="reaction-sub">Wait for the color change next time.</p>
+            <h1 className="reaction-heading">too soon</h1>
+            <p className="reaction-sub">wait for the color change next time.</p>
             <p className="reaction-cta">Click to try again</p>
           </>
         )}
@@ -243,7 +243,7 @@ export function ReactionGame() {
             </div>
             {showBest && (
               <p className="reaction-best">
-                Best avg: <strong>{highScore} ms</strong>
+                best avg: <strong>{highScore} ms</strong>
               </p>
             )}
             <p className="reaction-cta">Click to try again</p>

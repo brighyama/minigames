@@ -58,7 +58,7 @@
   min-width: 28px;
   height: 28px;
   padding: 0 6px;
-  font-family: ui-monospace, 'Courier New', monospace;
+  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   font-size: 14px;
   font-weight: 700;
@@ -132,7 +132,7 @@
 }
 
 .rl-result-net {
-  font-family: ui-monospace, 'Courier New', monospace;
+  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   font-size: 40px;
   font-weight: 700;
@@ -170,7 +170,7 @@
   padding: 7px 14px;
   background: rgba(0, 0, 0, 0.4);
   clip-path: var(--shape-octagon-sm);
-  font-family: ui-monospace, 'Courier New', monospace;
+  font-family: var(--mono);
   font-variant-numeric: tabular-nums;
   color: #ffffff;
 }

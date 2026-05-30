@@ -35,13 +35,13 @@ export function Leaderboard({ title, scoreLabel, load, formatScore }: Props) {
         <span className="leaderboard-meta">{scoreLabel}</span>
       </header>
 
-      {loading && <div className="leaderboard-empty">Loading…</div>}
+      {loading && <div className="leaderboard-empty">loading…</div>}
       {!loading && error && (
         <div className="leaderboard-empty leaderboard-error">{error}</div>
       )}
       {!loading && !error && rows.length === 0 && (
         <div className="leaderboard-empty">
-          No scores yet. Be the first.
+          no scores yet. be the first.
         </div>
       )}
 

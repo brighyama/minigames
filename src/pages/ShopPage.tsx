@@ -23,11 +23,11 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
 
   const purchase = async (item: { id: string; name: string; cost?: number }) => {
     if (!supabase) {
-      toast.show('Auth is not configured.', { tone: 'error' })
+      toast.show('auth is not configured.', { tone: 'error' })
       return
     }
     if (!user) {
-      toast.show('Sign in to make purchases.', { tone: 'error' })
+      toast.show('sign in to make purchases.', { tone: 'error' })
       return
     }
     const cost = item.cost ?? 0
@@ -42,20 +42,20 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
       return
     }
     if (!success) {
-      toast.show('Not enough points.', { tone: 'error' })
+      toast.show('not enough points.', { tone: 'error' })
       return
     }
     onUnlock(item.id)
     window.dispatchEvent(new CustomEvent('points-changed'))
-    toast.show(`Unlocked: ${item.name}`, { tone: 'success' })
+    toast.show(`unlocked: ${item.name}`, { tone: 'success' })
   }
 
   return (
     <main className="container">
       <BackButton />
       <header className="hero hero-compact">
-        <h1 className="title title-md">Shop</h1>
-        <p className="subtitle">Spend points to unlock cosmetics and collectibles.</p>
+        <h1 className="title title-md">shop</h1>
+        <p className="subtitle">spend points to unlock cosmetics and collectibles.</p>
       </header>
 
       <section className="shop-section" aria-labelledby="shop-themes-heading">

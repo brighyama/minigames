@@ -71,7 +71,7 @@
   backdrop-filter: blur(10px) saturate(140%);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   clip-path: var(--shape-octagon-sm);
-  font-family: var(--theme-font, ui-monospace, 'Courier New', monospace);
+  font-family: var(--theme-font, var(--mono));
   font-variant-numeric: tabular-nums;
   color: #ffffff;
 }
@@ -166,7 +166,7 @@
   padding: 2px 8px;
   background: rgba(255, 215, 100, 0.18);
   color: #ffd76b;
-  font-family: var(--theme-font, ui-monospace, 'Courier New', monospace);
+  font-family: var(--theme-font, var(--mono));
   font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 700;
@@ -193,7 +193,7 @@
   margin-top: 6px;
   padding: 4px 12px;
   background: rgba(0, 0, 0, 0.5);
-  font-family: var(--theme-font, ui-monospace, 'Courier New', monospace);
+  font-family: var(--theme-font, var(--mono));
   font-variant-numeric: tabular-nums;
   font-size: 14px;
   font-weight: 700;
@@ -311,7 +311,7 @@
 }
 
 .bj-result-amount {
-  font-family: var(--theme-font, ui-monospace, 'Courier New', monospace);
+  font-family: var(--theme-font, var(--mono));
   font-variant-numeric: tabular-nums;
   font-size: clamp(40px, 6vw, 64px);
   font-weight: 700;
@@ -523,7 +523,7 @@
 }
 
 .bj-bet-value {
-  font-family: var(--theme-font, ui-monospace, 'Courier New', monospace);
+  font-family: var(--theme-font, var(--mono));
   font-variant-numeric: tabular-nums;
   font-size: 22px;
   font-weight: 700;

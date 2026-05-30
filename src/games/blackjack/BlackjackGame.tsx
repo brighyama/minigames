@@ -370,10 +370,11 @@ export function BlackjackGame() {
           <div className="bj-player-area">
             {playerHands.length === 0 && phase === 'betting' && (
               <div className="bj-empty-message">
-                <h1 className="bj-heading">Blackjack</h1>
+                <h1 className="bj-heading">blackjack</h1>
                 <p className="bj-sub">
-                  Place your bet, then click Deal. Dealer stands on all 17s.
-                  Blackjack pays 3:2.
+                  place your bet, then click deal<br></br>
+                  dealer stands on all 17s<br></br>
+                  blackjack pays 3:2
                 </p>
               </div>
             )}
@@ -477,7 +478,7 @@ export function BlackjackGame() {
 
       {!user && (
         <div className="bj-note">
-          Playing with a demo bankroll — sign in to wager your real points.
+          Playing with a demo bankroll. Sign in to wager your real points.
         </div>
       )}
     </main>

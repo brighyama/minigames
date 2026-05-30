@@ -397,7 +397,7 @@
 }
 
 .auth-empty code {
-  font-family: ui-monospace, 'Courier New', monospace;
+  font-family: var(--mono);
   font-size: 11px;
   background: rgba(255, 255, 255, 0.08);
   padding: 1px 5px;
@@ -637,13 +637,16 @@
   aspect-ratio: 4 / 5;
   min-height: 260px;
 
-  /* Outer layer = gradient border, painted with the active theme. */
-  background: linear-gradient(135deg, var(--bg-start), var(--bg-stop));
+  /* Outer layer = solid border. The .card-inner layer (inset 2px with the same
+     clip-path) reveals this color as an even edge all the way around, including
+     the diagonal chamfers. Gray on default themes, accent on unlockables. */
+  background: var(--card-edge, #9ca3af);
   border: none;
   border-radius: 0;
   clip-path: var(--shape-diagonal);
 
-  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
+          drop-shadow(0 0 14px color-mix(in srgb, var(--card-edge, #9ca3af) 45%, transparent));
   text-decoration: none;
   overflow: hidden;
 
@@ -654,14 +657,25 @@
 
 .card:hover {
   transform: translateY(-4px);
-  filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.5))
+          drop-shadow(0 0 20px color-mix(in srgb, var(--card-edge, #9ca3af) 60%, transparent));
+}
+
+/* Inset content layer — same clip-path, so the .card edge shows as a uniform
+   border around every side including the diagonal corners. */
+.card-inner {
+  position: absolute;
+  inset: 2px;
+  display: flex;
+  flex-direction: column;
+  clip-path: var(--shape-diagonal);
+  overflow: hidden;
 }
 
 /* Top 80%: image (or themed placeholder gradient). */
 .card-image {
   position: relative;
   flex: 4;
-  margin: 2px 2px 0 2px;
 
   background-color: rgba(12, 10, 22, 0.5);
   background-size: cover;
@@ -676,12 +690,23 @@
   align-items: center;
   justify-content: center;
   padding: 0 16px;
-  margin: 0 2px 2px 2px;
 
   background: rgba(12, 10, 22, 0.88);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+  /* A backdrop-filter element ignores its ancestor's clip-path in Chrome, so
+     the footer's square bottom-right corner would paint over the card's diagonal
+     border. Chamfer the footer itself (matching the card's bottom-right cut) so
+     the edge stays visible all the way around. */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--chamfer)),
+    calc(100% - var(--chamfer)) 100%,
+    0 100%
+  );
 }
 
 .card-title {
@@ -701,7 +726,8 @@
 
 .card-soon:hover {
   transform: none;
-  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4))
+          drop-shadow(0 0 14px color-mix(in srgb, var(--accent-2, #27ae60) 45%, transparent));
 }
 
 .card-badge {
