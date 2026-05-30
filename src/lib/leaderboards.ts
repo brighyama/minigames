@@ -64,6 +64,22 @@ export async function fetchAimLeaderboard(
   return { rows }
 }
 
+export async function fetch2048Leaderboard(
+  limit = 100,
+): Promise<LeaderboardResult> {
+  if (!supabase) return { rows: [], error: 'Auth is not configured.' }
+  const { data, error } = await supabase.rpc('get_leaderboard_2048', {
+    lim: limit,
+  })
+  if (error) return { rows: [], error: error.message }
+  const rows = (data ?? []).map((r: ScoreRow) => ({
+    rank: r.rank,
+    username: r.username,
+    score: r.score,
+  }))
+  return { rows }
+}
+
 export async function fetchCasinoWinLeaderboard(
   limit = 100,
 ): Promise<LeaderboardResult> {

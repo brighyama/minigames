@@ -436,3 +436,82 @@ as $$
   limit lim;
 $$;
 grant execute on function public.get_leaderboard_casino_net(int) to anon, authenticated;
+
+-- ===========================================================================
+-- 2048
+-- ===========================================================================
+
+-- g2048_high_score stores the highest TILE the account has ever reached
+-- (e.g. 2048), not a merge score.
+alter table public.profiles
+  add column if not exists g2048_high_score int not null default 0;
+
+-- Remove earlier versions if a previous schema was applied.
+drop function if exists public.submit_2048_result(int);
+drop function if exists public.submit_2048_result(int, int);
+
+-- One-time cleanup: clear any pre-existing values that aren't a valid tile
+-- (leftovers from when this column held a merge score).
+update public.profiles
+   set g2048_high_score = 0
+ where g2048_high_score > 0
+   and (g2048_high_score > 131072 or (g2048_high_score & (g2048_high_score - 1)) <> 0);
+
+-- Settle a 2048 run by the top tile reached. Updates the account's best tile
+-- (the leaderboard) and awards points derived from the tile:
+--   < 64 -> 0, then 64 -> 5, doubling each tile up (128 -> 10, 256 -> 20,
+--   512 -> 40, 1024 -> 80, 2048 -> 160, 4096 -> 320, ...).
+-- top_tile is validated as a power of two no larger than the 131072 a 4x4
+-- board can reach, so a client can't fabricate it. Returns (best, reward).
+create or replace function public.submit_2048_result(top_tile int)
+returns table (best int, reward int)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+  new_best     int;
+  award        int;
+begin
+  -- top_tile must be 0 or a power of two within reach of a 4x4 board.
+  if top_tile is null or top_tile < 0 or top_tile > 131072
+     or (top_tile > 0 and (top_tile & (top_tile - 1)) <> 0) then
+    raise exception 'top_tile out of plausible range';
+  end if;
+
+  -- Reward = 5 * (top_tile / 64), i.e. 5 at the 64 tile and doubling upward.
+  if top_tile >= 64 then
+    award := 5 * (top_tile / 64);
+  else
+    award := 0;
+  end if;
+
+  select g2048_high_score into current_best
+    from public.profiles where user_id = auth.uid();
+  new_best := greatest(coalesce(current_best, 0), top_tile);
+
+  update public.profiles
+     set g2048_high_score = new_best,
+         points           = points + award,
+         lifetime_points  = lifetime_points + award,
+         updated_at       = now()
+   where user_id = auth.uid();
+
+  return query select new_best, award;
+end;
+$$;
+grant execute on function public.submit_2048_result(int) to authenticated;
+
+create or replace function public.get_leaderboard_2048(lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.g2048_high_score desc) as int) as rank,
+    p.username,
+    p.g2048_high_score as score
+  from public.profiles p
+  where p.username is not null and p.g2048_high_score > 0
+  order by p.g2048_high_score desc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_2048(int) to anon, authenticated;

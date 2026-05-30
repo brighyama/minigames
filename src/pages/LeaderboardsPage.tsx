@@ -7,6 +7,7 @@ import {
   fetchTotalPointsLeaderboard,
   fetchReactionLeaderboard,
   fetchAimLeaderboard,
+  fetch2048Leaderboard,
   fetchCasinoWinLeaderboard,
   fetchCasinoNetLeaderboard,
 } from '../lib/leaderboards'
@@ -64,6 +65,11 @@ export function LeaderboardsPage() {
           title="Aim Trainer"
           scoreLabel="Best score"
           load={() => fetchAimLeaderboard(100)}
+        />
+        <Leaderboard
+          title="2048"
+          scoreLabel="Best tile"
+          load={() => fetch2048Leaderboard(100)}
         />
         <Leaderboard
           title="Biggest Win"

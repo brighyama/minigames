@@ -36,6 +36,13 @@ const games: Game[] = [
       'radial-gradient(circle at 30% 30%, #6db2ff 0%, #2d4ea0 60%, #0e1a3a 100%)',
   },
   {
+    id: '2048',
+    name: '2048',
+    path: '/games/2048',
+    placeholderGradient:
+      'linear-gradient(135deg, #edc22e 0%, #f67c5f 55%, #776e65 100%)',
+  },
+  {
     id: 'chess',
     name: 'Chess',
     placeholderGradient: 'linear-gradient(135deg, #5e3a1c 0%, #d4b08c 100%)',

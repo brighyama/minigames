@@ -12,6 +12,7 @@ import { cardDecks } from './lib/cardDecks'
 import { AuthPanel } from './components/AuthPanel'
 import { DailyBonus } from './components/DailyBonus'
 import { RarityIcon, rarityLabel } from './components/RarityIcon'
+import { applyTilePalette } from './games/g2048/palette'
 import { HomePage } from './pages/HomePage'
 import { LeaderboardsPage } from './pages/LeaderboardsPage'
 import { ShopPage } from './pages/ShopPage'
@@ -19,6 +20,7 @@ import { ReactionGame } from './games/reaction/ReactionGame'
 import { AimGame } from './games/aim/AimGame'
 import { BlackjackGame } from './games/blackjack/BlackjackGame'
 import { RouletteGame } from './games/roulette/RouletteGame'
+import { Game2048 } from './games/g2048/Game2048'
 
 const THEME_KEY = 'minigames:theme'
 const DECK_KEY = 'minigames:deck'
@@ -70,6 +72,20 @@ function App() {
     )
     root.style.setProperty('--accent-1', theme.accent1 ?? DEFAULT_ACCENT_1)
     root.style.setProperty('--accent-2', theme.accent2 ?? DEFAULT_ACCENT_2)
+
+    // Aim trainer circle: plain white for the default themes; accent-tinted for
+    // unlockable themes (the only ones with `locked`).
+    if (theme.locked) {
+      root.style.setProperty('--aim-circle-a', theme.accent2 ?? DEFAULT_ACCENT_2)
+      root.style.setProperty('--aim-circle-b', theme.accent1 ?? DEFAULT_ACCENT_1)
+    } else {
+      root.style.setProperty('--aim-circle-a', '#ffffff')
+      root.style.setProperty('--aim-circle-b', '#e2e2e2')
+    }
+
+    // 2048 tiles: unlockable themes get a unique ramp; defaults use CSS colors.
+    applyTilePalette(root, theme.id)
+
     localStorage.setItem(THEME_KEY, theme.id)
   }, [theme])
 
@@ -360,6 +376,7 @@ function App() {
         />
         <Route path="/games/reaction" element={<ReactionGame />} />
         <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
+        <Route path="/games/2048" element={<Game2048 />} />
         <Route path="/games/blackjack" element={<BlackjackGame />} />
         <Route path="/games/roulette" element={<RouletteGame />} />
       </Routes>

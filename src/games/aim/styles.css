@@ -158,8 +158,8 @@
   cursor: pointer;
   background: radial-gradient(
     circle at 32% 32%,
-    var(--accent-2, #34e89e),
-    var(--accent-1, #0f3443)
+    var(--aim-circle-a, #ffffff),
+    var(--aim-circle-b, #e2e2e2)
   );
   box-shadow:
     0 0 18px rgba(255, 255, 255, 0.18),
