@@ -1,7 +1,7 @@
 # Minigames — Project Reference
 
 A personal hub of small browser games with shared progression: accounts, points, daily bonuses, a shop, themes, card decks, achievement-style rarities, and leaderboards. Two families of games:
-- **Skill games** — Reaction Test, Aim Trainer, 2048 (high-score based; 2048 also ships with a built-in, swappable AI solver).
+- **Skill games** — Reaction Test, Aim Trainer, 2048 (high-score based; 2048 also ships with a built-in, swappable AI solver), and Chess (play vs a built-in `chess.js` engine — the one game with **no** points/leaderboard/backend).
 - **Casino games** — Blackjack, Roulette (wager points). Grouped under a "Casino" section on the home page.
 
 **One unified visual theme spans every game.** The active theme reskins the whole surface — page gradient, accents, card decks, **2048 tile palettes**, and **aim-trainer targets** — and every game uses the same chamfered `clip-path` geometry (never `border-radius`). See "Unified theming across games" below.
@@ -124,6 +124,13 @@ src/
       RouletteTable.tsx       European felt: 0 + 3×12 grid, columns/dozens/even-money. Chip placement.
       lib.ts                  Wheel order, colorOf, bet defs (covers + payout), settleRound, abbrev.
       styles.css
+    chess/
+      ChessGame.tsx           Board UI, click-to-move, engine-level / time-control / piece-skin
+                              controls, clocks, move list. Uses the chess.js library.
+      lib.ts                  Pure engine: material eval + alpha-beta minimax, 3 levels
+                              (casual/standard/expert), all time-bounded. No React, no backend.
+      palette.ts              Per-theme board colors → --chess-* CSS vars (mirrors g2048).
+      styles.css              Board + piece styling (shared clip-path geometry).
 ```
 
 ---
@@ -144,7 +151,13 @@ src/
   - `--theme-text`, `--theme-font`, `--theme-title-shadow` — typography overrides.
   - `--accent-1` / `--accent-2` — general-purpose color slots. Reaction test reads them for the wait/go backgrounds; aim circles use them for their radial gradient and explosion particles. Naming is intentional — these are for any future game/feature, not reaction-specific.
 - Default themes (4, unlocked): **Classic, Forest, Lilac, Mono.**
-- Locked themes (5, in shop): **Mint, Candy, Ember, Midnight, Noir.**
+- Locked themes (**15**, in the shop), grouped by rarity tier (price shared within a tier):
+  - **green (~100):** Mint, Aqua, Sakura
+  - **blue (~1K):** Candy, Sunset, Glacier
+  - **purple (~10K):** Ember, Amethyst, Verdant
+  - **red (~100K):** Midnight, Synthwave, Inferno
+  - **gold (~1M):** Noir, Celestial, Eclipse
+- Higher tiers layer on more flourish: green = gradient + accents only; blue adds a tuned text color; purple does full text theming; red/gold add display fonts and glowing title shadows.
 
 ### Unified theming across games
 
@@ -153,6 +166,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 - **Geometry.** No game uses `border-radius`. All panels, tiles, buttons, and overlays use the shared `clip-path` chamfer shapes (`--shape-octagon`, `--shape-octagon-sm`, `--shape-diagonal`) defined at the top of [App.css](src/App.css). The 2048 board/overlay use `--shape-octagon`; its tiles/score boxes/buttons use `--shape-octagon-sm`.
 - **2048 tile colors are theme-driven.** [palette.ts](src/games/g2048/palette.ts) holds a curated 11-color palette per *unlockable* theme — deliberately mixing light/dark shades and rotating complementary hues (not a flat gradient), with the 2048 tile as the theme's signature color. The **4 default themes have no palette → they fall back to the classic 2048 colors** baked into the tile CSS. Tile text color is auto-chosen per background by WCAG luminance. `applyTilePalette()` clears the vars on every theme switch so palettes never bleed across themes.
 - **Aim-trainer targets are theme-driven.** Circles read `--aim-circle-a/--aim-circle-b`. For the **4 default themes the circle is plain white** (`#ffffff → #e2e2e2`); unlockable themes tint it with their accents. Set in the same App.tsx theme effect.
+- **Chess board is theme-driven.** [src/games/chess/palette.ts](src/games/chess/palette.ts)'s `applyChessPalette()` (called from the App.tsx theme effect) sets `--chess-light/dark/hint/capture`; the **4 default themes fall back to classic browns**, unlockable themes get a bespoke board palette.
 - **Accents + decks** (`--accent-1/2`, `--card-*`) continue to flow into reaction/aim/blackjack as before.
 
 ### Rarity glow (themes + card decks)
@@ -189,7 +203,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 ### Shop
 
 - Route `/shop`. Top-right shop bag icon links to it (home-only).
-- One section per cosmetic category. Currently: **Themes** (auto-renders one card per `theme.locked === true`).
+- One section per cosmetic category. Currently two: **Themes** (one card per `theme.locked === true`) and **Card decks** (one card per `deck.locked === true`, with a fanned 3-card preview).
 - Cards show the rarity icon, gradient preview, price tag, and a buy button. Owned themes show only the "Owned" tag — no button.
 - Buy flow: `spend_points` RPC → on success, `onUnlock(themeId)` is called by `ShopPage` which is passed down from App; App appends to `unlocks` state + persists to profile.
 
@@ -247,6 +261,15 @@ The goal is that **every game looks like part of the same site** under whatever 
 - **Autonomous round loop** runs forever (betting 12s → spinning 6.5s → result 4.5s) even with no bet, so the wheel can be watched idle.
 - Backend: **server-authoritative** when signed in AND bets are placed — `roulette_spin(bets)` RPC picks the number + computes payout + moves points atomically, returning the number the client then animates to. No-bet rounds and signed-out play use local RNG.
 - StrictMode-safe: round-id guard (`settledRoundRef`) makes settlement idempotent; the spin RPC only fires from the `spinning` phase effect (not the double-invoked mount effect).
+
+#### Chess (`src/games/chess/`)
+
+- Play vs a built-in JavaScript engine (the [chess.js](https://www.npmjs.com/package/chess.js) library handles rules / move generation / SAN). Click a piece → legal targets highlight → click to move; last-move and check squares are highlighted, with a move list and a clock panel alongside the board. **You auto-switch colors each "new game"** (the engine opens with a random first move when it plays white).
+- **Engine levels** ([lib.ts](src/games/chess/lib.ts)): *casual* (greedy heuristic — favors captures/checks/promotions/center), *standard* (depth-1 minimax), *expert* (depth-2 alpha-beta with positional terms). All searches are wall-clock-bounded (`maxMs`).
+- **Time controls:** none / 1+1 / 3+2 / 5 (Fischer increment supported; "none" = untimed). Running out flags a loss.
+- **Cosmetics are local UI selects, _not_ shop items:** 4 piece *color* skins (classic / walnut / frost / neon) × 3 piece *styles* (classic Staunton SVG / geometric / glyph).
+- **Board colors are theme-driven** via [palette.ts](src/games/chess/palette.ts) — see "Unified theming across games".
+- **Purely client-side: chess awards no points and has no leaderboard, profile column, or Supabase RPC.** It's the only game with zero backend integration — nothing to add to `schema.sql` for it.
 
 ### Home page categories
 
