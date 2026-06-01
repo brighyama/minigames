@@ -13,7 +13,8 @@
   height: min(72vh, 720px);
   min-height: 460px;
 
-  background: linear-gradient(135deg, var(--bg-start), var(--bg-stop));
+  background: var(--theme-bg);
+  background-size: var(--theme-bg-size);
   clip-path: var(--shape-diagonal);
   filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4));
 }

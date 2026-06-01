@@ -4,14 +4,17 @@ import { supabase } from '../../lib/supabase'
 import { fetchProfile } from '../../lib/profile'
 import { useToast } from '../../lib/toast'
 import { BackButton } from '../../components/BackButton'
+import { RarityIcon } from '../../components/RarityIcon'
 import {
   abbrev,
   buildReel,
-  CASES,
-  caseById,
-  chanceOf,
+  CASE,
   formatMultiplier,
+  itemLabel,
+  itemMultiplier,
   pickItemIndex,
+  RARITIES,
+  rarityChanceOf,
   RARITY_COLOR,
   RARITY_LABEL,
   REEL_LANDING,
@@ -28,6 +31,10 @@ type ServerOpen = {
   payout: number
   net: number
   new_points: number
+  reward_kind: 'chips' | 'cosmetic'
+  unlock_id: string | null
+  unlock_name: string | null
+  duplicate: boolean
 }
 
 const CHIPS = [10, 25, 100, 500, 1_000]
@@ -40,13 +47,21 @@ type SpinResult = {
   item: CaseItem
   payout: number
   net: number
+  rewardKind: 'chips' | 'cosmetic'
+  unlockId: string | null
+  unlockName: string | null
+  duplicate: boolean
+  persisted: boolean
 }
 
-export function CasesGame() {
+type Props = {
+  onUnlock?: (unlockId: string) => void
+}
+
+export function CasesGame({ onUnlock }: Props) {
   const { user } = useAuth()
   const toast = useToast()
 
-  const [caseId, setCaseId] = useState(CASES[0].id)
   const [wager, setWager] = useState(100)
   const [balance, setBalance] = useState(DEFAULT_DEMO_BALANCE)
   const [phase, setPhase] = useState<Phase>('idle')
@@ -56,16 +71,14 @@ export function CasesGame() {
 
   const wrapRef = useRef<HTMLDivElement>(null)
   const stripRef = useRef<HTMLDivElement>(null)
-  // Result captured at spin launch, applied when the animation lands.
   const pendingRef = useRef<SpinResult | null>(null)
   const serverRowRef = useRef<ServerOpen | null>(null)
   const endTimerRef = useRef<number>(0)
   const landedRef = useRef(false)
 
-  const def = caseById(caseId)
+  const def = CASE
   const spinning = phase === 'spinning'
 
-  // Hydrate the bankroll from the player's real points (signed-in).
   useEffect(() => {
     if (!user) return
     let cancelled = false
@@ -78,11 +91,6 @@ export function CasesGame() {
     }
   }, [user])
 
-  // Drive the reel with the Web Animations API. Each spin remounts the strip
-  // (keyed by spinId), so this fires once per spin: we measure the tile pitch,
-  // compute where the winning tile (REEL_LANDING) must sit under the center
-  // pointer, and glide there on a strong ease-out. WAAPI runs on its own
-  // timeline (no fighting React's `style` prop) and `onfinish` settles the spin.
   useEffect(() => {
     if (!spinning) return
     const wrap = wrapRef.current
@@ -94,8 +102,6 @@ export function CasesGame() {
     const pitch = second.left - first.left
     const tileW = first.width
     const center = wrap.clientWidth / 2
-    // Land slightly off dead-center for realism, but always within the tile so
-    // the pointer stays on the winning item.
     const jitter = (Math.random() * 2 - 1) * (tileW * 0.3)
     const target = -(REEL_LANDING * pitch + tileW / 2 - center) + jitter
 
@@ -104,12 +110,7 @@ export function CasesGame() {
       { duration: SPIN_MS, easing: SPIN_EASE, fill: 'forwards' },
     )
     anim.onfinish = land
-    // Fallback: a hidden/backgrounded tab freezes the animation timeline (and
-    // `onfinish`), but timers still fire — so settle the result on a timer too.
-    // `land()` is idempotent, so whichever runs first wins.
     endTimerRef.current = window.setTimeout(land, SPIN_MS + 200)
-    // On a normal finish `fill: forwards` holds the reel on the winning tile;
-    // only cancel (snapping back) if we're tearing down an unfinished spin.
     return () => {
       window.clearTimeout(endTimerRef.current)
       if (anim.playState !== 'finished') anim.cancel()
@@ -117,8 +118,6 @@ export function CasesGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spinId, spinning])
 
-  // Settle the visible spin: reveal the won item + apply the payout once.
-  // Guarded by a ref because both `onfinish` and a re-run could race here.
   const land = () => {
     if (landedRef.current) return
     landedRef.current = true
@@ -132,11 +131,25 @@ export function CasesGame() {
       setBalance(server.new_points)
       window.dispatchEvent(new CustomEvent('points-changed'))
     } else {
-      // Demo / signed-out: payout was not yet credited locally.
       setBalance((b) => b + pending.payout)
     }
-    if (pending.net > 0) {
-      toast.show(`+${pending.net.toLocaleString()} — ${RARITY_LABEL[pending.item.rarity]}!`, {
+
+    if (
+      pending.persisted &&
+      pending.rewardKind === 'cosmetic' &&
+      pending.unlockId &&
+      !pending.duplicate
+    ) {
+      onUnlock?.(pending.unlockId)
+      toast.show(`unlocked: ${pending.unlockName ?? itemLabel(pending.item)}`, {
+        tone: 'success',
+      })
+    } else if (pending.rewardKind === 'cosmetic' && pending.duplicate && pending.net > 0) {
+      toast.show(`duplicate ${pending.unlockName ?? 'cosmetic'}: +${pending.net.toLocaleString()}`, {
+        tone: 'success',
+      })
+    } else if (pending.net > 0) {
+      toast.show(`+${pending.net.toLocaleString()} - ${RARITY_LABEL[pending.item.rarity]}!`, {
         tone: 'success',
       })
     }
@@ -148,19 +161,16 @@ export function CasesGame() {
     setResult(null)
     serverRowRef.current = null
     landedRef.current = false
-    // Stake is removed up front; payout is credited when the reel lands.
     setBalance((b) => b - wager)
 
     let winnerIndex: number
     if (user && supabase) {
       const { data, error } = await supabase.rpc('cases_open', {
-        case_id: caseId,
+        case_id: def.id,
         wager,
       })
       const row = (Array.isArray(data) ? data[0] : data) as ServerOpen | null
       if (error || !row) {
-        // Fall back to a local draw so the reel still resolves; refund the
-        // optimistic deduction and credit locally at landing instead.
         console.error('[cases] open failed', error)
         winnerIndex = pickItemIndex(def)
       } else {
@@ -173,9 +183,23 @@ export function CasesGame() {
 
     const server = serverRowRef.current
     const item = def.items[winnerIndex]
-    const payout = server ? server.payout : Math.floor(wager * item.multiplier)
+    const payout = server
+      ? server.payout
+      : item.kind === 'chips'
+        ? Math.floor(wager * item.multiplier)
+        : 0
     const net = server ? server.net : payout - wager
-    pendingRef.current = { index: winnerIndex, item, payout, net }
+    pendingRef.current = {
+      index: winnerIndex,
+      item,
+      payout,
+      net,
+      rewardKind: server?.reward_kind ?? item.kind,
+      unlockId: server?.unlock_id ?? (item.kind === 'cosmetic' ? item.cosmeticId : null),
+      unlockName: server?.unlock_name ?? (item.kind === 'cosmetic' ? item.cosmeticName : null),
+      duplicate: server?.duplicate ?? false,
+      persisted: !!server,
+    }
 
     setReel(buildReel(def, winnerIndex))
     setSpinId((n) => n + 1)
@@ -195,43 +219,21 @@ export function CasesGame() {
     setWager(balance)
   }
 
-  const selectCase = (id: string) => {
-    if (spinning) return
-    setCaseId(id)
-    setResult(null)
-  }
-
   return (
     <main className="cases-container">
       <BackButton label="Exit" />
 
       <header className="cases-header">
-        <h1 className="cases-title">cases</h1>
+        <div>
+          <h1 className="cases-title">cases</h1>
+          <p className="cases-subtitle">{def.tagline}</p>
+        </div>
         <div className="cases-balance" aria-label="Balance">
           <span className="cases-balance-label">balance</span>
           <span className="cases-balance-value">{balance.toLocaleString()}</span>
         </div>
       </header>
 
-      {/* Case picker */}
-      <div className="cases-picker" role="tablist" aria-label="Choose a case">
-        {CASES.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            role="tab"
-            aria-selected={c.id === caseId}
-            className={`cases-pick${c.id === caseId ? ' is-active' : ''}`}
-            onClick={() => selectCase(c.id)}
-            disabled={spinning}
-          >
-            <span className="cases-pick-name">{c.name}</span>
-            <span className="cases-pick-tag">{c.tagline}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* The reel */}
       <div className={`cases-reel-wrap${spinning ? ' is-spinning' : ''}`} ref={wrapRef}>
         <div className="cases-reel-pointer" aria-hidden="true" />
         <div className="cases-reel-fade cases-reel-fade-l" aria-hidden="true" />
@@ -256,26 +258,40 @@ export function CasesGame() {
         )}
       </div>
 
-      {/* Result banner */}
       <div className="cases-result-slot">
         {phase === 'result' && result && (
           <div
             className={`cases-result rarity-${result.item.rarity} ${result.net > 0 ? 'is-win' : result.net < 0 ? 'is-lose' : 'is-push'}`}
           >
-            <span className="cases-result-mult">{formatMultiplier(result.item.multiplier)}</span>
+            <span className="cases-result-mult">
+              {result.rewardKind === 'cosmetic' && !result.duplicate
+                ? result.unlockName
+                : result.rewardKind === 'cosmetic' && result.duplicate
+                  ? 'duplicate'
+                : formatMultiplier(itemMultiplier(result.item))}
+            </span>
             <span className="cases-result-net">
               {result.net > 0 ? '+' : ''}
               {result.net.toLocaleString()}
             </span>
             <span className="cases-result-sub">
-              {result.net > 0 ? 'profit' : result.net < 0 ? 'better luck next time' : 'broke even'}
+              {result.rewardKind === 'cosmetic' && !result.duplicate && result.persisted
+                ? 'cosmetic unlocked'
+                : result.rewardKind === 'cosmetic' && !result.duplicate
+                  ? 'demo cosmetic'
+                : result.rewardKind === 'cosmetic' && result.duplicate
+                  ? 'duplicate bonus'
+                  : result.net > 0
+                    ? 'profit'
+                    : result.net < 0
+                      ? 'better luck next time'
+                      : 'broke even'}
             </span>
           </div>
         )}
-        {spinning && <div className="cases-result cases-result-spin">opening…</div>}
+        {spinning && <div className="cases-result cases-result-spin">opening...</div>}
       </div>
 
-      {/* Wager controls */}
       <div className="cases-controls">
         <div className="cases-wager-row">
           <div className="cases-wager" aria-label="Wager">
@@ -288,7 +304,7 @@ export function CasesGame() {
             onClick={open}
             disabled={spinning || wager <= 0 || wager > balance}
           >
-            {spinning ? 'opening…' : wager > balance ? 'not enough' : 'open case'}
+            {spinning ? 'opening...' : wager > balance ? 'not enough' : 'open case'}
           </button>
         </div>
 
@@ -324,22 +340,23 @@ export function CasesGame() {
         </div>
       </div>
 
-      {/* Odds table for the selected case */}
       <div className="cases-odds" aria-label={`${def.name} odds`}>
-        {def.items.map((it, i) => (
-          <div key={i} className={`cases-odds-item rarity-${it.rarity}`}>
-            <span className="cases-odds-dot" style={{ background: RARITY_COLOR[it.rarity] }} />
-            <span className="cases-odds-mult">{formatMultiplier(it.multiplier)}</span>
-            <span className="cases-odds-rarity">{RARITY_LABEL[it.rarity]}</span>
-            <span className="cases-odds-chance">{(chanceOf(def, it) * 100).toFixed(2)}%</span>
+        {RARITIES.map((rarity) => (
+          <div key={rarity} className={`cases-odds-item rarity-${rarity}`}>
+            <span className="cases-odds-dot" style={{ background: RARITY_COLOR[rarity] }} />
+            <span className={`cases-odds-rarity rarity-${rarity}`}>
+              <RarityIcon rarity={rarity} />
+              <span>{RARITY_LABEL[rarity]}</span>
+            </span>
+            <span className="cases-odds-chance">
+              {(rarityChanceOf(def, rarity) * 100).toFixed(2)}%
+            </span>
           </div>
         ))}
       </div>
 
       <div className="cases-note">
-        {user
-          ? ''
-          : 'Playing with a demo bankroll. Sign in to wager your real points.'}
+        {user ? '' : 'Playing with a demo bankroll. Sign in to wager your real points.'}
       </div>
     </main>
   )
@@ -351,8 +368,13 @@ function ReelTile({ item, highlight }: { item: CaseItem; highlight?: boolean }) 
       className={`cases-tile rarity-${item.rarity}${highlight ? ' is-landed' : ''}`}
       style={{ ['--rar' as string]: RARITY_COLOR[item.rarity] }}
     >
-      <span className="cases-tile-mult">{formatMultiplier(item.multiplier)}</span>
-      <span className="cases-tile-rarity">{RARITY_LABEL[item.rarity]}</span>
+      <span className={`cases-tile-kind${item.kind === 'cosmetic' ? ' is-cosmetic' : ''}`}>
+        {item.kind === 'cosmetic' ? item.cosmeticKind : 'chips'}
+      </span>
+      <span className="cases-tile-mult">{itemLabel(item)}</span>
+      <span className={`cases-tile-rarity rarity-${item.rarity}`}>
+        <RarityIcon rarity={item.rarity} />
+      </span>
     </div>
   )
 }

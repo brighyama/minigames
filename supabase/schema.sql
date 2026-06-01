@@ -437,22 +437,35 @@ as $$
 $$;
 grant execute on function public.get_leaderboard_casino_net(int) to anon, authenticated;
 
--- Cases (CS-style case opening). Server-authoritative: the server owns the RNG
--- and the payout, mirroring roulette_spin. The case item tables here MUST match
+-- Cases. Server-authoritative: the server owns the RNG and payout, mirroring
+-- roulette_spin. The case item table here MUST match
 -- src/games/cases/lib.ts exactly — same per-case item order (so item_index maps
--- to the same tier client-side), same integer weights (summing to 10000), and
--- same multipliers (stored here as hundredths, e.g. 150 = 1.50x). Opening
--- deducts the wager, draws a weighted item, and pays out wager*multiplier.
--- Returns (item_index, mult_x100, payout, net, new_points).
+-- to the same reward client-side), same integer weights (summing to 10000),
+-- reward kinds, multipliers, cosmetic IDs, and duplicate profits.
+drop function if exists public.cases_open(text, int);
 create or replace function public.cases_open(case_id text, wager int)
-returns table (item_index int, mult_x100 int, payout int, net int, new_points int)
+returns table (
+  item_index int,
+  mult_x100 int,
+  payout int,
+  net int,
+  new_points int,
+  reward_kind text,
+  unlock_id text,
+  unlock_name text,
+  duplicate boolean
+)
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  weights int[];
-  mults   int[];   -- multipliers in hundredths (150 = 1.50x)
+  weights int[] := array[1700, 2450, 350, 2400, 880, 220, 1200, 300, 220, 180, 60, 40];
+  kinds text[] := array['chips', 'chips', 'cosmetic', 'chips', 'chips', 'cosmetic', 'chips', 'cosmetic', 'chips', 'cosmetic', 'chips', 'cosmetic'];
+  mults int[] := array[0, 40, 0, 85, 120, 0, 250, 0, 750, 0, 5000, 0];
+  duplicate_profits int[] := array[0, 0, 100, 0, 0, 300, 0, 1200, 0, 5000, 0, 20000];
+  unlock_ids text[] := array[null::text, null::text, 'mint', null::text, null::text, 'mono', null::text, 'prism', null::text, 'royal', null::text, 'casino-royale'];
+  unlock_names text[] := array[null::text, null::text, 'mint theme', null::text, null::text, 'mono deck', null::text, 'prism theme', null::text, 'royal deck', null::text, 'casino royale theme'];
   total   int;
   r       int;
   acc     int := 0;
@@ -461,27 +474,26 @@ declare
   pay     int;
   net_change int;
   pts     int;
+  current_unlocks text[];
+  reward text;
+  won_unlock_id text;
+  won_unlock_name text;
+  duplicate_hit boolean := false;
+  duplicate_profit int := 0;
 begin
   if wager is null or wager <= 0 then
     raise exception 'wager must be positive';
   end if;
 
-  -- Per-case tables (mirror of CASES in src/games/cases/lib.ts).
-  if case_id = 'standard' then
-    weights := array[4050, 3500, 1700, 600, 150];
-    mults   := array[20,   75,   150,  300, 1000];
-  elsif case_id = 'classified' then
-    weights := array[4730, 3300, 1300, 600, 70];
-    mults   := array[10,   60,   180,  500, 2500];
-  elsif case_id = 'covert' then
-    weights := array[6000, 2500, 1050, 400, 50];
-    mults   := array[0,    50,   200,  800, 5000];
-  else
+  if case_id <> 'arcade' then
     raise exception 'unknown case';
   end if;
 
-  -- Atomically check + deduct the wager.
-  select points into pts from public.profiles where user_id = auth.uid();
+  -- Atomically lock, check, and later update the profile.
+  select points, unlocks into pts, current_unlocks
+    from public.profiles
+   where user_id = auth.uid()
+   for update;
   if pts is null then
     raise exception 'no profile';
   end if;
@@ -504,20 +516,49 @@ begin
   end loop;
 
   mult := mults[idx + 1];
+  reward := kinds[idx + 1];
+  won_unlock_id := unlock_ids[idx + 1];
+  won_unlock_name := unlock_names[idx + 1];
+
+  if reward = 'cosmetic' then
+    duplicate_hit := coalesce(current_unlocks, array[]::text[]) @> array[won_unlock_id];
+    if duplicate_hit then
+      duplicate_profit := duplicate_profits[idx + 1];
+    else
+      mult := 0;
+    end if;
+  end if;
+
   pay  := (wager::bigint * mult / 100)::int;
+  if duplicate_hit then
+    pay := wager + duplicate_profit;
+  end if;
   net_change := pay - wager;
 
   update public.profiles
      set points             = points - wager + pay,
-         -- Mirror roulette: only the returned amount counts toward lifetime.
          lifetime_points    = lifetime_points + pay,
          casino_net         = casino_net + net_change,
          casino_biggest_win = greatest(casino_biggest_win, net_change),
+         unlocks            = case
+                                when reward = 'cosmetic' and not duplicate_hit
+                                  then array_append(coalesce(unlocks, array[]::text[]), won_unlock_id)
+                                else unlocks
+                              end,
          updated_at         = now()
    where user_id = auth.uid()
    returning points into pts;
 
-  return query select idx, mult, pay, net_change, pts;
+  return query select
+    idx,
+    mult,
+    pay,
+    net_change,
+    pts,
+    reward,
+    won_unlock_id,
+    won_unlock_name,
+    duplicate_hit;
 end;
 $$;
 grant execute on function public.cases_open(text, int) to authenticated;

@@ -84,7 +84,7 @@ const casinoGames: Game[] = [
     id: 'cases',
     name: 'cases',
     tagline: 'gold, gold, gold',
-    // path: '/games/cases',
+    path: '/games/cases',
     gradient: 'linear-gradient(135deg, #ffd764 0%, #c7a94d 45%, #a38b42 100%)',
   },
 ]

@@ -24,7 +24,8 @@
 
 .reaction-game.is-idle,
 .reaction-game.is-result {
-  background: linear-gradient(135deg, var(--bg-start), var(--bg-stop));
+  background: var(--theme-bg);
+  background-size: var(--theme-bg-size);
 }
 
 .reaction-game.is-waiting {

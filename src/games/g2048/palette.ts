@@ -1,26 +1,16 @@
-// Per-theme 2048 tile palettes. The four default themes (classic, forest,
-// lilac, mono) are intentionally absent here — they fall back to the classic
-// 2048 colors defined in styles.css.
-//
-// Each unlockable theme gets a *curated* 11-color set (one per tile value) that
-// stays in the theme's color family but deliberately mixes light and dark
-// shades and rotates through complementary hues, rather than a single gradient.
-// The 2048 tile is the theme's signature color so reaching the goal pops, and
-// `super` covers anything beyond 2048. Tile text color is chosen automatically
-// from each background's luminance so contrast is always readable.
+// Per-theme 2048 tile palettes. Default themes (classic, forest, mono) are
+// intentionally absent here; they fall back to the classic colors in styles.css.
 
 const TILE_VALUES = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048] as const
 
 type PaletteSpec = {
-  /** Exactly 11 colors, one per entry of TILE_VALUES (2 … 2048). */
+  /** Exactly 11 colors, one per entry of TILE_VALUES (2 ... 2048). */
   tiles: [string, string, string, string, string, string, string, string, string, string, string]
   /** Color for tiles beyond 2048. */
   super: string
 }
 
 const SPECS: Record<string, PaletteSpec> = {
-  // Mint — greens that drift through teal and cyan, light low tiles, deep
-  // mid tiles, bright signature mint at the goal.
   mint: {
     tiles: [
       '#ecfdf5', '#bbf7d0', '#6ee7b7', '#34d399', '#10b981',
@@ -28,7 +18,20 @@ const SPECS: Record<string, PaletteSpec> = {
     ],
     super: '#a7f3d0',
   },
-  // Candy — pinks blooming into magenta and purple, with a hot-pink goal.
+  notebook: {
+    tiles: [
+      '#f8fafc', '#e7edf7', '#d5deec', '#b7c6dc', '#91a4bf',
+      '#61789b', '#41526d', '#2f3b50', '#f5c84b', '#d99f24', '#61a0ff',
+    ],
+    super: '#fff3b0',
+  },
+  arcade: {
+    tiles: [
+      '#eafff2', '#b8f7ce', '#8cf3b4', '#5affa1', '#34d17a',
+      '#16a35f', '#0f7c49', '#1c5a3f', '#ffd166', '#ff9f1c', '#5affa1',
+    ],
+    super: '#ffd166',
+  },
   candy: {
     tiles: [
       '#fdf2ff', '#fbcfe8', '#f9a8d4', '#f472b6', '#ec4899',
@@ -36,53 +39,6 @@ const SPECS: Record<string, PaletteSpec> = {
     ],
     super: '#e9d5ff',
   },
-  // Ember — warm peaches → orange → red, with an amber/gold pop midway and a
-  // glowing ember goal.
-  ember: {
-    tiles: [
-      '#fff7ed', '#fed7aa', '#fdba74', '#fb923c', '#f97316',
-      '#ea580c', '#dc2626', '#b91c1c', '#fbbf24', '#92400e', '#ff5e3a',
-    ],
-    super: '#ffe08a',
-  },
-  // Midnight — periwinkle → indigo → violet, lighter pops near the top.
-  midnight: {
-    tiles: [
-      '#eef2ff', '#c7d2fe', '#a5b4fc', '#818cf8', '#6366f1',
-      '#4f46e5', '#4338ca', '#7c3aed', '#6d28d9', '#3730a3', '#a78bfa',
-    ],
-    super: '#c4b5fd',
-  },
-  // Noir — grayscale from near-white to near-black, then gold accents for the
-  // high-value "exclusive" tiles.
-  noir: {
-    tiles: [
-      '#f5f5f5', '#d4d4d4', '#a3a3a3', '#737373', '#525252',
-      '#404040', '#262626', '#1c1c1c', '#bfa14a', '#d4af37', '#f5d77a',
-    ],
-    super: '#ffffff',
-  },
-
-  // --- Green tier ---
-  // Aqua — pale cyan diving into teal and deep blue, bright aqua goal.
-  aqua: {
-    tiles: [
-      '#ecfeff', '#cffafe', '#a5f3fc', '#67e8f9', '#22d3ee',
-      '#06b6d4', '#0891b2', '#0e7490', '#155e75', '#164e63', '#8ff7e6',
-    ],
-    super: '#a5f3fc',
-  },
-  // Sakura — blossom pinks deepening to plum, soft rose goal.
-  sakura: {
-    tiles: [
-      '#fff1f5', '#ffe4ec', '#fbcfe0', '#f9a8c9', '#f472a6',
-      '#ec4899', '#db2777', '#be185d', '#9d174d', '#5e2750', '#ffc2d1',
-    ],
-    super: '#ffe4ec',
-  },
-
-  // --- Blue tier ---
-  // Sunset — warm peach → orange → magenta dusk, golden goal.
   sunset: {
     tiles: [
       '#fff1e6', '#ffe0c2', '#ffc89e', '#ffa86b', '#ff8c42',
@@ -90,36 +46,41 @@ const SPECS: Record<string, PaletteSpec> = {
     ],
     super: '#ffe9c2',
   },
-  // Glacier — pale ice blues sinking into slate and deep navy, icy goal.
-  glacier: {
+  blueprint: {
     tiles: [
-      '#f0f9ff', '#e0f2fe', '#bae6fd', '#7dd3fc', '#38bdf8',
-      '#0ea5e9', '#0284c7', '#2c5364', '#1e3a4c', '#0f2027', '#8fe3ff',
+      '#eaf6ff', '#bfe8ff', '#8fd9ff', '#73d3ff', '#39bff2',
+      '#168fc7', '#0e6a99', '#123a5d', '#ffb000', '#d68400', '#73d3ff',
     ],
-    super: '#bae6fd',
+    super: '#ffd166',
   },
-
-  // --- Purple tier ---
-  // Amethyst — lavender to deep violet, luminous orchid goal.
-  amethyst: {
+  aurora: {
     tiles: [
-      '#f5f3ff', '#ede9fe', '#ddd6fe', '#c4b5fd', '#a78bfa',
-      '#8b5cf6', '#7c3aed', '#6d28d9', '#5b21b6', '#2f0743', '#c9a3ff',
+      '#effcff', '#bff8ef', '#8af3e1', '#5eead4', '#22c7c7',
+      '#2090b0', '#3b6cb8', '#6d5bd0', '#8b5cf6', '#a855f7', '#5eead4',
     ],
-    super: '#ddd6fe',
+    super: '#c4b5fd',
   },
-  // Verdant — mint to deep forest emerald, vivid spring-green goal.
-  verdant: {
+  prism: {
     tiles: [
-      '#ecfdf5', '#d1fae5', '#a7f3d0', '#6ee7b7', '#34d399',
-      '#10b981', '#059669', '#237a57', '#065f46', '#093028', '#7dffb0',
+      '#fbf8ff', '#d9f8ff', '#9aecff', '#32dcff', '#b8f24b',
+      '#ffcc66', '#ff9f6e', '#ff6b9d', '#ff4ca3', '#8b5cf6', '#32dcff',
+    ],
+    super: '#ffcc66',
+  },
+  overgrowth: {
+    tiles: [
+      '#ecfdf5', '#d1fae5', '#a7f3d0', '#7dffb0', '#34d399',
+      '#10b981', '#059669', '#237a57', '#14583f', '#07150f', '#7dffb0',
     ],
     super: '#a7f3d0',
   },
-
-  // --- Red tier ---
-  // Synthwave — deep violet base striped with neon purple, magenta and cyan;
-  // hot-pink goal. Deliberately electric.
+  midnight: {
+    tiles: [
+      '#eef2ff', '#c7d2fe', '#a5b4fc', '#818cf8', '#6366f1',
+      '#4f46e5', '#4338ca', '#7c3aed', '#6d28d9', '#3730a3', '#a78bfa',
+    ],
+    super: '#c4b5fd',
+  },
   synthwave: {
     tiles: [
       '#1f1147', '#2d1a5e', '#3b2370', '#5b2a9e', '#7c3aed',
@@ -127,17 +88,20 @@ const SPECS: Record<string, PaletteSpec> = {
     ],
     super: '#05d9e8',
   },
-  // Inferno — charred embers climbing through fire to a molten-yellow goal.
-  inferno: {
+  voltage: {
     tiles: [
-      '#241010', '#3a1610', '#571c0d', '#79220b', '#9c2c08',
-      '#c43c06', '#ef5305', '#ff6d00', '#ff8c00', '#ffaa00', '#ffd000',
+      '#f8fbff', '#dce9ff', '#a7c8ff', '#6ba0ff', '#2c7bff',
+      '#1f55c8', '#17357c', '#111827', '#faff00', '#c7d900', '#2c7bff',
     ],
-    super: '#fff0a3',
+    super: '#faff00',
   },
-
-  // --- Gold tier ---
-  // Celestial — cosmic indigo ascending through twilight into warm gold.
+  noir: {
+    tiles: [
+      '#f5f5f5', '#d4d4d4', '#a3a3a3', '#737373', '#525252',
+      '#404040', '#262626', '#1c1c1c', '#bfa14a', '#d4af37', '#f5d77a',
+    ],
+    super: '#ffffff',
+  },
   celestial: {
     tiles: [
       '#15103f', '#20184f', '#2c2266', '#3d3088', '#5648ab',
@@ -145,13 +109,12 @@ const SPECS: Record<string, PaletteSpec> = {
     ],
     super: '#fff3cf',
   },
-  // Eclipse — black to violet with a piercing cyan flare midway, orchid goal.
-  eclipse: {
+  'casino-royale': {
     tiles: [
-      '#111118', '#1a1422', '#241a30', '#321f45', '#4a2a6b',
-      '#6336a0', '#7b4397', '#00f0ff', '#00c4d4', '#5a2a8c', '#b06bff',
+      '#fff7df', '#e8d38a', '#d7bf74', '#b99a45', '#0f6a43',
+      '#0d4a31', '#093322', '#5a1018', '#7f1d1d', '#b91c1c', '#ffd764',
     ],
-    super: '#00f0ff',
+    super: '#fff0a3',
   },
 }
 

@@ -134,7 +134,11 @@
   grid-template-columns: repeat(var(--cols), 1fr);
   gap: 3px;
   padding: 8px;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--board-bg, rgba(0, 0, 0, 0.35));
+  background-size: var(--board-bg-size, auto);
+  box-shadow:
+    0 0 0 1px var(--board-border, rgba(255, 255, 255, 0.1)) inset,
+    var(--board-glow, 0 0 22px -8px var(--accent-1, #8b5cf6));
   border-radius: 0;
   clip-path: var(--shape-octagon);
   /* Scale the whole board to the viewport but cap cell size on small grids. */
@@ -157,13 +161,13 @@
   font-size: clamp(0.7rem, calc(72vw / var(--cols)), 1.25rem);
   line-height: 1;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--board-cell, rgba(255, 255, 255, 0.14));
   color: var(--theme-text, #fff);
   transition: background 90ms ease, transform 60ms ease;
 }
 
 .mines-cell:hover:not(.is-revealed) {
-  background: rgba(255, 255, 255, 0.26);
+  background: var(--board-cell-alt, rgba(255, 255, 255, 0.26));
 }
 
 .mines-cell:active:not(.is-revealed) {
@@ -171,13 +175,13 @@
 }
 
 .mines-cell.is-revealed {
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--board-cell-empty, rgba(0, 0, 0, 0.28));
   cursor: default;
 }
 
 .mines-cell.is-flagged {
   color: #ff6b6b;
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--board-cell-alt, rgba(255, 255, 255, 0.18));
 }
 
 .mines-cell.is-mine {

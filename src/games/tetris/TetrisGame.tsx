@@ -183,7 +183,12 @@ export function TetrisGame() {
   const stageRef = useRef<HTMLDivElement | null>(null)
   const flashElRef = useRef<HTMLDivElement | null>(null)
   const countdownElRef = useRef<HTMLDivElement | null>(null)
-  const accentRef = useRef<{ a1: string; a2: string }>({ a1: '#8b5cf6', a2: '#34e89e' })
+  const accentRef = useRef<{ a1: string; a2: string; grid: string; gridAlpha: number }>({
+    a1: '#8b5cf6',
+    a2: '#34e89e',
+    grid: 'rgba(255,255,255,0.05)',
+    gridAlpha: 0.16,
+  })
 
   useEffect(() => {
     userIdRef.current = user?.id
@@ -245,6 +250,8 @@ export function TetrisGame() {
     accentRef.current = {
       a1: cs.getPropertyValue('--accent-1').trim() || '#8b5cf6',
       a2: cs.getPropertyValue('--accent-2').trim() || '#34e89e',
+      grid: cs.getPropertyValue('--accent-2').trim() || '#34e89e',
+      gridAlpha: Number(cs.getPropertyValue('--board-grid-alpha').trim()) || 0.16,
     }
 
     // Size the canvas backing store to its CSS box for crisp rendering.
@@ -597,7 +604,8 @@ export function TetrisGame() {
       ctx.clearRect(0, 0, w, h)
 
       // Subtle grid.
-      ctx.strokeStyle = 'rgba(255,255,255,0.05)'
+      ctx.globalAlpha = accentRef.current.gridAlpha
+      ctx.strokeStyle = accentRef.current.grid
       ctx.lineWidth = 1
       ctx.beginPath()
       for (let x = 1; x < WIDTH; x++) {
@@ -609,6 +617,7 @@ export function TetrisGame() {
         ctx.lineTo(w, y * size)
       }
       ctx.stroke()
+      ctx.globalAlpha = 1
 
       // Locked cells (only the visible region).
       for (let y = HIDDEN; y < HEIGHT; y++) {

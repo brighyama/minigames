@@ -117,7 +117,11 @@
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
   padding: clamp(7px, 1.2vw, 12px);
-  background: rgba(0, 0, 0, 0.34);
+  background: var(--board-bg, rgba(0, 0, 0, 0.34));
+  background-size: var(--board-bg-size, auto);
+  box-shadow:
+    0 0 0 1px var(--board-border, rgba(255, 255, 255, 0.12)) inset,
+    var(--board-glow, 0 0 22px -8px var(--accent-1, #8b5cf6));
   clip-path: var(--shape-octagon);
   user-select: none;
 }
@@ -210,15 +214,15 @@
 }
 
 .chess-square.is-selected {
-  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 4px var(--board-border, rgba(255, 255, 255, 0.72));
 }
 
 .chess-square.is-last-move {
-  box-shadow: inset 0 0 0 999px rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 999px var(--board-cell, rgba(255, 255, 255, 0.12));
 }
 
 .chess-square.is-selected.is-last-move {
-  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.72), inset 0 0 0 999px rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 4px var(--board-border, rgba(255, 255, 255, 0.72)), inset 0 0 0 999px var(--board-cell, rgba(255, 255, 255, 0.12));
 }
 
 .chess-square.is-legal {

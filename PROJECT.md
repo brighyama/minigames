@@ -49,8 +49,8 @@ src/
                               theme state into every game's CSS variables.
   App.css                     Most styles — sidebar, theme tiles, cards, points/daily/shop, toasts,
                               leaderboards, shop, polygon shape variables.
-  index.css                   :root CSS variables (defaults for --bg-start, --bg-stop, --theme-text,
-                              --theme-font, --accent-1, --accent-2), body gradient binding.
+  index.css                   :root CSS variables (defaults for --theme-bg, --theme-bg-size,
+                              --theme-text, --theme-font, --accent-1, --accent-2), body background binding.
 
   lib/
     supabase.ts               Creates the supabase client; null if env vars missing.
@@ -122,17 +122,18 @@ Each game's `CONTEXT.md` is the source of truth for its mechanics, points formul
 
 - Defined in [src/lib/themes.ts](src/lib/themes.ts) — `Theme` type + `themes` array (first = default for new users).
 - Active theme writes these CSS variables on `:root`:
-  - `--bg-start` / `--bg-stop` — full-page linear gradient (fixed-attached on `body`).
+  - `--theme-bg` / `--theme-bg-size` — full-page CSS background, supporting gradients and patterns.
   - `--theme-text`, `--theme-font`, `--theme-title-shadow` — typography overrides.
   - `--accent-1` / `--accent-2` — general-purpose color slots that any game can read.
-- Default themes (4, unlocked): **Classic, Forest, Lilac, Mono.**
+  - `--board-bg`, `--board-bg-size`, `--board-border`, `--board-glow`, `--board-cell`, `--board-cell-alt`, `--board-cell-empty`, `--board-grid` — shared board-skin variables derived from the active theme's accents and rarity.
+- Default themes (3, unlocked): **Classic, Forest, Mono.**
 - Locked themes (**15**, in the shop), grouped by rarity tier (priced per-item within each tier):
-  - **green (40–60):** Mint 40, Aqua 50, Sakura 60
-  - **blue (150–250):** Candy 150, Sunset 200, Glacier 250
-  - **purple (600–900):** Ember 600, Amethyst 750, Verdant 900
-  - **red (2k–3k):** Midnight 2,000, Synthwave 2,500, Inferno 3,000
-  - **gold (8k–12k):** Noir 8,000, Celestial 10,000, Eclipse 12,000
-- Higher tiers layer on more flourish: green = gradient + accents only; blue adds a tuned text color; purple does full text theming; red/gold add display fonts and glowing title shadows.
+  - **green (40–60):** Mint 40, Notebook 50, Arcade 60
+  - **blue (150–250):** Candy 150, Sunset 200, Blueprint 250
+  - **purple (600–900):** Aurora 600, Prism 750, Overgrowth 900
+  - **red (2k–3k):** Midnight 2,000, Synthwave 2,500, Voltage 3,000
+  - **gold:** Noir 8,000, Celestial 10,000; Casino Royale is gold case-drop only
+- Higher tiers layer on more flourish: green = restrained patterns and accents; blue adds stronger visual identity and tuned text; purple adds richer layered backgrounds; red/gold add display fonts and glowing title shadows.
 
 ### Unified theming across games
 
@@ -141,11 +142,12 @@ The goal is that **every game looks like part of the same site** under whatever 
 - **Geometry.** No game uses `border-radius`. All panels, tiles, buttons, and overlays use the shared `clip-path` chamfer shapes (`--shape-octagon`, `--shape-octagon-sm`, `--shape-diagonal`) defined at the top of [App.css](src/App.css).
 - **Per-game color hooks** set by the theme effect:
   - `--accent-1/2` — reaction backgrounds, aim/tetris accents, particles (general-purpose).
+  - `--board-*` — shared board surfaces for grid/board games. Wordle, 2048, Tetris, Chess, and Minesweeper consume these for shells, cell backgrounds, grid lines, and glows; future board games should prefer these variables before adding bespoke skin hooks.
   - `--aim-circle-a/b` — aim-trainer target gradient (`aim/palette` behavior).
   - `--g2048-bg-*/--g2048-fg-*` — 2048 tile palette (`applyTilePalette`).
   - `--chess-light/dark/hint/capture` — chess board (`applyChessPalette`).
   - `--card-*` — blackjack card deck (from the active card deck).
-- **Default vs unlockable themes.** The 4 default themes generally fall back to each game's classic/neutral colors; unlockable themes get bespoke per-game palettes. Tetris is the exception: its pieces keep constant colors across all themes (readability is a gameplay requirement) and theme only via the board chrome — see `tetris/CONTEXT.md`.
+- **Default vs unlockable themes.** The 3 default themes generally fall back to each game's classic/neutral colors; unlockable themes get bespoke per-game palettes. Tetris is the exception: its pieces keep constant colors across all themes (readability is a gameplay requirement) and theme only via the board chrome — see `tetris/CONTEXT.md`.
 
 ### Rarity glow (themes + card decks)
 
@@ -250,7 +252,7 @@ Grants below reflect the **post-`hardening.sql`** state (run schema.sql, then ha
 | `blackjack_settle(payout int) returns int` | authenticated | Pays out (**capped at 2.5× the escrow**), records casino stats, clears the escrow. |
 | `roulette_multiplier(bet_id text, winning int)` | (helper) | Gross return factor for a bet (0/2/3/36). Mirrors `betDef`. |
 | `roulette_spin(bets jsonb)` | authenticated | Server-authoritative: deducts wager, picks number, pays out, records stats. |
-| `cases_open(case_id text, wager int) returns (item_index, mult_x100, payout, net, new_points)` | authenticated | Server-authoritative case open: deducts wager, weighted-draws an item, pays `wager×multiplier`, records casino stats. Item tables mirror `src/games/cases/lib.ts`. |
+| `cases_open(case_id text, wager int) returns (item_index, mult_x100, payout, net, new_points, reward_kind, unlock_id, unlock_name, duplicate)` | authenticated | Server-authoritative case open: deducts wager, weighted-draws an item, pays chip rewards or duplicate cosmetic refunds, unlocks first-time cosmetics, records casino stats. Item tables mirror `src/games/cases/lib.ts`. |
 | `get_leaderboard_total / _reaction / _aim / _2048 / _tetris / _wordle / _casino_win / _casino_net (lim int)` | anon, authenticated | Public leaderboards, each filtering `username is not null`. |
 | `get_leaderboard_minesweeper(diff text, lim int)` | anon, authenticated | Public per-difficulty Minesweeper board (fastest time asc). `diff` ∈ easy/medium/hard. |
 | `add_points(amount int)`, `record_casino_result(net int)` | **revoked** | Legacy arbitrary-amount mutators. `hardening.sql` revokes EXECUTE. Do not reintroduce grants. |
@@ -282,7 +284,7 @@ Run `schema.sql` then **`hardening.sql`**. The model: **no client can inject poi
 ### Add a new theme
 
 1. Open [src/lib/themes.ts](src/lib/themes.ts).
-2. Append to the `themes` array. Required: `id`, `name`, `start`, `stop`. Optional: `locked`, `cost`, `rarity`, `accent1`, `accent2`, `text`, `font`, `titleShadow`.
+2. Append to the `themes` array. Required: `id`, `name`, `background`, `swatch`. Optional: `backgroundSize`, `locked`, `cost`, `rarity`, `accent1`, `accent2`, `text`, `font`, `titleShadow`.
 3. If locked, it auto-appears in the shop.
 
 ### Manually inject points / relock items (for testing)

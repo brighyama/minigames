@@ -75,7 +75,11 @@
   grid-template-rows: repeat(4, 1fr);
   gap: 10px;
   padding: 10px;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--board-bg, rgba(0, 0, 0, 0.35));
+  background-size: var(--board-bg-size, auto);
+  box-shadow:
+    0 0 0 1px var(--board-border, rgba(255, 255, 255, 0.1)) inset,
+    var(--board-glow, 0 0 22px -8px var(--accent-1, #8b5cf6));
   border-radius: 0;
   clip-path: var(--shape-octagon);
   aspect-ratio: 1 / 1;
@@ -116,7 +120,7 @@
 /* Tile palette. Colors come from CSS variables so the active theme can
    re-skin them (see src/games/g2048/palette.ts). The fallbacks below are the
    classic 2048 colors, used by the four default themes. */
-.tile-empty { background: rgba(255, 255, 255, 0.06); }
+.tile-empty { background: var(--board-cell-empty, rgba(255, 255, 255, 0.06)); }
 .tile-2 { background: var(--g2048-bg-2, #eee4da); color: var(--g2048-fg-2, #776e65); }
 .tile-4 { background: var(--g2048-bg-4, #ede0c8); color: var(--g2048-fg-4, #776e65); }
 .tile-8 { background: var(--g2048-bg-8, #f2b179); color: var(--g2048-fg-8, #f9f6f2); }

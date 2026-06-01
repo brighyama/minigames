@@ -1,6 +1,6 @@
 :root {
-  --bg-start: #6c4cff;
-  --bg-stop: #4cc6ff;
+  --theme-bg: linear-gradient(135deg, #6c4cff 0%, #4cc6ff 100%);
+  --theme-bg-size: auto;
 
   --text: #e8e6f0;
   --text-dim: #b5b0c4;
@@ -44,7 +44,8 @@ body,
 }
 
 body {
-  background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-stop) 100%);
+  background: var(--theme-bg);
+  background-size: var(--theme-bg-size);
   background-attachment: fixed;
   overflow-x: hidden;
 }

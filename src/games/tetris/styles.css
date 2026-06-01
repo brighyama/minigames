@@ -72,7 +72,7 @@
 }
 
 .tetris-box {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--board-cell-alt, rgba(0, 0, 0, 0.3));
   clip-path: var(--shape-octagon-sm);
   padding: 0.55rem;
   display: flex;
@@ -105,16 +105,22 @@
    an accent glow, with the canvas inside. */
 .tetris-well {
   position: relative;
-  background: rgba(0, 0, 0, 0.42);
+  background: var(--board-bg, rgba(0, 0, 0, 0.42));
+  background-size: var(--board-bg-size, auto);
   clip-path: var(--shape-octagon);
   padding: 10px;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-    0 0 22px -6px var(--accent-1, #8b5cf6);
+    0 0 0 1px var(--board-border, rgba(255, 255, 255, 0.06)) inset,
+    var(--board-glow, 0 0 22px -6px var(--accent-1, #8b5cf6));
 }
 
 .tetris-canvas {
   display: block;
+  background:
+    linear-gradient(var(--board-grid, rgba(255, 255, 255, 0.045)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--board-grid, rgba(255, 255, 255, 0.045)) 1px, transparent 1px),
+    color-mix(in srgb, var(--board-cell-empty, rgba(255, 255, 255, 0.05)) 70%, transparent);
+  background-size: 10% 5%, 10% 5%, auto;
   /* 10 wide x 20 tall visible cells. */
   aspect-ratio: 1 / 2;
   height: min(72vh, 620px);

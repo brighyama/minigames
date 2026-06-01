@@ -18,7 +18,7 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
   const toast = useToast()
   const [busyId, setBusyId] = useState<string | null>(null)
 
-  const lockedThemes = themes.filter((t) => t.locked)
+  const lockedThemes = themes.filter((t) => t.locked && !t.caseDropOnly)
   const lockedDecks = cardDecks.filter((d) => d.locked)
 
   const purchase = async (item: { id: string; name: string; cost?: number }) => {
@@ -82,7 +82,7 @@ export function ShopPage({ unlocks, points, onUnlock }: Props) {
                 <div
                   className="shop-card-preview"
                   style={{
-                    background: `linear-gradient(135deg, ${theme.start}, ${theme.stop})`,
+                    background: theme.swatch,
                   }}
                   aria-hidden="true"
                 />

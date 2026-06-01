@@ -36,6 +36,26 @@ const THEME_KEY = 'minigames:theme'
 const DECK_KEY = 'minigames:deck'
 const UNLOCKS_KEY = 'minigames:unlocks'
 
+function boardPatternForTheme(theme: { rarity?: string }, accent1: string, accent2: string): string {
+  const base = `linear-gradient(135deg, color-mix(in srgb, ${accent1} 22%, #08070e), color-mix(in srgb, ${accent2} 18%, #12101c))`
+  if (theme.rarity === 'gold') {
+    return `repeating-linear-gradient(45deg, color-mix(in srgb, ${accent2} 18%, transparent) 0 1px, transparent 1px 28px), radial-gradient(circle at 50% 0%, color-mix(in srgb, ${accent1} 28%, transparent), transparent 38%), ${base}`
+  }
+  if (theme.rarity === 'red') {
+    return `linear-gradient(120deg, transparent 0 42%, color-mix(in srgb, ${accent1} 24%, transparent) 42% 44%, transparent 44% 100%), linear-gradient(38deg, transparent 0 58%, color-mix(in srgb, ${accent2} 22%, transparent) 58% 60%, transparent 60% 100%), ${base}`
+  }
+  if (theme.rarity === 'purple') {
+    return `radial-gradient(circle at 18% 16%, color-mix(in srgb, ${accent1} 30%, transparent), transparent 32%), radial-gradient(circle at 82% 78%, color-mix(in srgb, ${accent2} 28%, transparent), transparent 34%), ${base}`
+  }
+  if (theme.rarity === 'blue') {
+    return `linear-gradient(color-mix(in srgb, ${accent1} 14%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, ${accent2} 12%, transparent) 1px, transparent 1px), ${base}`
+  }
+  if (theme.rarity === 'green') {
+    return `repeating-linear-gradient(135deg, color-mix(in srgb, ${accent2} 11%, transparent) 0 2px, transparent 2px 18px), ${base}`
+  }
+  return 'rgba(0, 0, 0, 0.35)'
+}
+
 function loadUnlocks(): string[] {
   try {
     const raw = localStorage.getItem(UNLOCKS_KEY)
@@ -72,8 +92,8 @@ function App() {
 
   useEffect(() => {
     const root = document.documentElement
-    root.style.setProperty('--bg-start', theme.start)
-    root.style.setProperty('--bg-stop', theme.stop)
+    root.style.setProperty('--theme-bg', theme.background)
+    root.style.setProperty('--theme-bg-size', theme.backgroundSize ?? 'auto')
     root.style.setProperty('--theme-text', theme.text ?? '#ffffff')
     root.style.setProperty('--theme-font', theme.font ?? 'inherit')
     root.style.setProperty(
@@ -82,6 +102,18 @@ function App() {
     )
     root.style.setProperty('--accent-1', theme.accent1 ?? DEFAULT_ACCENT_1)
     root.style.setProperty('--accent-2', theme.accent2 ?? DEFAULT_ACCENT_2)
+    const accent1 = theme.accent1 ?? DEFAULT_ACCENT_1
+    const accent2 = theme.accent2 ?? DEFAULT_ACCENT_2
+    root.style.setProperty('--board-bg', boardPatternForTheme(theme, accent1, accent2))
+    root.style.setProperty('--board-bg-size', theme.rarity === 'blue' ? '32px 32px, 32px 32px, auto' : 'auto')
+    root.style.setProperty('--board-border', `color-mix(in srgb, ${accent2} 46%, rgba(255, 255, 255, 0.18))`)
+    root.style.setProperty('--board-glow', `0 0 28px -8px ${accent1}`)
+    root.style.setProperty('--board-cell', `color-mix(in srgb, ${accent2} 18%, rgba(255, 255, 255, 0.12))`)
+    root.style.setProperty('--board-cell-alt', `color-mix(in srgb, ${accent1} 22%, rgba(0, 0, 0, 0.28))`)
+    root.style.setProperty('--board-cell-empty', `color-mix(in srgb, ${accent1} 11%, rgba(255, 255, 255, 0.055))`)
+    const boardGridMix = theme.rarity === 'red' || theme.rarity === 'gold' ? 12 : 28
+    root.style.setProperty('--board-grid', `color-mix(in srgb, ${accent2} ${boardGridMix}%, rgba(255, 255, 255, 0.09))`)
+    root.style.setProperty('--board-grid-alpha', theme.rarity === 'red' || theme.rarity === 'gold' ? '0.07' : '0.16')
 
     // Game-card border: default themes get a neutral gray; unlockable themes
     // get their own accent so the edge pops in their palette.
@@ -290,10 +322,10 @@ function App() {
                     onClick={() => !locked && selectTheme(t.id)}
                     aria-pressed={selected}
                     aria-disabled={locked}
-                    title={locked ? `locked. buy in shop` : t.name}
+                    title={locked ? (t.caseDropOnly ? 'locked. case drop only' : 'locked. buy in shop') : t.name}
                     style={
                       {
-                        '--swatch': `linear-gradient(135deg, ${t.start}, ${t.stop})`,
+                        '--swatch': t.swatch,
                       } as CSSProperties
                     }
                   >
@@ -401,7 +433,7 @@ function App() {
         <Route path="/games/chess" element={<ChessGame />} />
         <Route path="/games/blackjack" element={<BlackjackGame />} />
         <Route path="/games/roulette" element={<RouletteGame />} />
-        <Route path="/games/cases" element={<CasesGame />} />
+        <Route path="/games/cases" element={<CasesGame onUnlock={addUnlock} />} />
       </Routes>
       </Suspense>
     </div>
