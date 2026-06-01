@@ -26,7 +26,7 @@ type ServerSpin = {
   new_points: number
 }
 
-const CHIPS = [10, 100, 1_000, 10_000, 100_000]
+const CHIPS = [10, 25, 100, 500, 1_000]
 const DEFAULT_DEMO_BALANCE = 10_000
 
 const BETTING_MS = 12_000

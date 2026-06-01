@@ -22,6 +22,13 @@ type Game = {
 // future ideas that haven't been built yet.
 const games: Game[] = [
   {
+    id: 'wordle',
+    name: 'daily word',
+    path: '/games/wordle',
+    placeholderGradient:
+      'linear-gradient(135deg, #2e7d46 0%, #1f5230 40%, #b59230 41%, #6b5618 100%)',
+  },
+  {
     id: 'reaction',
     name: 'reaction time',
     path: '/games/reaction',

@@ -482,19 +482,19 @@
   background: radial-gradient(circle at 35% 35%, #6ee79d, #166534);
 }
 
-.bj-chip.chip-100 {
+.bj-chip.chip-25 {
   background: radial-gradient(circle at 35% 35%, #60a5fa, #1e3a8a);
 }
 
-.bj-chip.chip-1000 {
+.bj-chip.chip-100 {
   background: radial-gradient(circle at 35% 35%, #c084fc, #581c87);
 }
 
-.bj-chip.chip-10000 {
+.bj-chip.chip-500 {
   background: radial-gradient(circle at 35% 35%, #f87171, #7f1d1d);
 }
 
-.bj-chip.chip-100000 {
+.bj-chip.chip-1000 {
   background: radial-gradient(circle at 35% 35%, #fde68a, #b45309);
   border-color: rgba(255, 215, 100, 0.85);
 }

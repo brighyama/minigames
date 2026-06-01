@@ -1,7 +1,7 @@
 # Minigames — Project Reference
 
 A personal hub of small browser games with shared progression: accounts, points, daily bonuses, a shop, themes, card decks, achievement-style rarities, and leaderboards. Two families of games:
-- **Skill games** — Reaction Test, Aim Trainer, 2048, Tetris, Chess.
+- **Skill games** — Reaction Test, Aim Trainer, 2048, Tetris, Daily Word, Chess.
 - **Casino games** — Blackjack, Roulette (wager points). Grouped under a "Casino" section on the home page.
 
 **One unified visual theme spans every game.** The active theme reskins the whole surface — page gradient, accents, card decks, and per-game palettes — and every game uses the same chamfered `clip-path` geometry (never `border-radius`). See "Unified theming across games" below.
@@ -81,6 +81,7 @@ src/
     aim/                      20s click-the-target trainer.              → aim/CONTEXT.md
     g2048/                    Classic 2048 + swappable AI solver.        → g2048/CONTEXT.md
     tetris/                   TETR.IO-style Sprint 40L (canvas).         → tetris/CONTEXT.md
+    wordle/                   Date-seeded daily 5-letter word game.      → wordle/CONTEXT.md
     blackjack/                6-deck blackjack, escrowed economy.        → blackjack/CONTEXT.md
     roulette/                 European roulette, server-authoritative.   → roulette/CONTEXT.md
     chess/                    Vs a built-in engine. No backend.          → chess/CONTEXT.md
@@ -96,6 +97,7 @@ src/
 | Aim Trainer | `/games/aim` | `aim/` | Most targets in 20s | `award_aim`, `update_aim_high_score` |
 | 2048 | `/games/2048` | `g2048/` | Highest tile reached | `submit_2048_result` |
 | Tetris | `/games/tetris` | `tetris/` | Fastest 40-line sprint (ms) | `submit_tetris_result` |
+| Daily Word | `/games/wordle` | `wordle/` | Best daily solve streak | `submit_wordle_result` |
 | Blackjack | `/games/blackjack` | `blackjack/` | Casino net / biggest win | `blackjack_deal_stake`/`add_stake`/`settle` |
 | Roulette | `/games/roulette` | `roulette/` | Casino net / biggest win | `roulette_spin` (server-authoritative) |
 | Chess | `/games/chess` | `chess/` | — (no scoring) | none |
@@ -120,12 +122,12 @@ Each game's `CONTEXT.md` is the source of truth for its mechanics, points formul
   - `--theme-text`, `--theme-font`, `--theme-title-shadow` — typography overrides.
   - `--accent-1` / `--accent-2` — general-purpose color slots that any game can read.
 - Default themes (4, unlocked): **Classic, Forest, Lilac, Mono.**
-- Locked themes (**15**, in the shop), grouped by rarity tier (price shared within a tier):
-  - **green (~100):** Mint, Aqua, Sakura
-  - **blue (~1K):** Candy, Sunset, Glacier
-  - **purple (~10K):** Ember, Amethyst, Verdant
-  - **red (~100K):** Midnight, Synthwave, Inferno
-  - **gold (~1M):** Noir, Celestial, Eclipse
+- Locked themes (**15**, in the shop), grouped by rarity tier (priced per-item within each tier):
+  - **green (40–60):** Mint 40, Aqua 50, Sakura 60
+  - **blue (150–250):** Candy 150, Sunset 200, Glacier 250
+  - **purple (600–900):** Ember 600, Amethyst 750, Verdant 900
+  - **red (2k–3k):** Midnight 2,000, Synthwave 2,500, Inferno 3,000
+  - **gold (8k–12k):** Noir 8,000, Celestial 10,000, Eclipse 12,000
 - Higher tiers layer on more flourish: green = gradient + accents only; blue adds a tuned text color; purple does full text theming; red/gold add display fonts and glowing title shadows.
 
 ### Unified theming across games
@@ -146,7 +148,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 - `Rarity = 'green' | 'blue' | 'purple' | 'red' | 'gold'` (in [themes.ts](src/lib/themes.ts); shared by card decks).
 - Visual indicator via [components/RarityIcon.tsx](src/components/RarityIcon.tsx): 1/2/3/4 stars for green/blue/purple/red, a crown SVG for gold (the "exclusive" tier).
 - Glow effect: outer background swapped to the rarity color + `filter: drop-shadow(...)` traces the chamfered shape. Applied on sidebar tiles and shop cards.
-- **Cost tiers scale ~exponentially** with rarity: green ~100, blue ~1K, purple ~10K, red ~100K, gold ~1M. Casino chip denominations mirror this ladder (10 / 100 / 1K / 10K / 100K).
+- **Cost tiers** follow a compressed "collectible" ladder, priced per-item within each rarity: green ~40–60, blue ~150–250, purple ~600–900, red ~2k–3k, gold ~8k–12k (reachable given the flat game rewards). Casino chips are a small flat set: **10 / 25 / 100 / 500 / 1,000** (colored green→gold to echo the rarity order, but no longer 1:1 with the price tiers).
 
 ### Card decks
 
@@ -185,7 +187,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 ### Leaderboards
 
 - Route `/leaderboards`. Cards rendered in a responsive grid.
-- Seven boards: **Total Points**, **Reaction Time** (lower = better, `X ms`), **Aim Trainer**, **2048** (best tile), **Tetris Sprint** (lower = better, 40-line time), **Biggest Win** (single casino round), **Casino Net** (cumulative, signed display).
+- Eight boards: **Total Points**, **Reaction Time** (lower = better, `X ms`), **Aim Trainer**, **2048** (best tile), **Tetris Sprint** (lower = better, 40-line time), **Daily Word** (best solve streak), **Biggest Win** (single casino round), **Casino Net** (cumulative, signed display).
 - All driven by `SECURITY DEFINER` RPCs that filter `username is not null`. Users without a username never appear — the page shows a gold banner reminding them to set one.
 
 ### Home page categories & top-right cluster
@@ -212,6 +214,10 @@ The goal is that **every game looks like part of the same site** under whatever 
 | `aim_high_score` | `int` | Most circles in 20s. 0 = no record. |
 | `g2048_high_score` | `int` | Highest **tile** ever reached in 2048 (e.g. 2048), not a merge score. |
 | `tetris_sprint_ms` | `int` | Best time (ms) to clear 40 lines in Tetris Sprint. Null = no record. **Lower is better.** |
+| `wordle_last_day` | `int` | UTC day index of the last submitted Daily Word puzzle. Null = never played. |
+| `wordle_streak` | `int` | Current consecutive-day solve streak. |
+| `wordle_best_streak` | `int` | Max streak ever. Drives the Daily Word leaderboard. |
+| `wordle_wins` / `wordle_played` | `int` | Total puzzles solved / attempted. |
 | `casino_net` | `bigint` | Cumulative casino net (can be negative). Drives Casino Net board. |
 | `casino_biggest_win` | `int` | Best single-round net win. Drives Biggest Win board. |
 | `bj_open_stake` | `bigint` | Server-side blackjack escrow: points staked in the current open round. 0 between rounds. |
@@ -231,13 +237,14 @@ Grants below reflect the **post-`hardening.sql`** state (run schema.sql, then ha
 | `update_reaction_best(avg_ms int)` | authenticated | Writes the best avg only if better (lower). Rejects `< 100ms`. |
 | `update_aim_high_score(score int)` | authenticated | Writes the high score only if better. Rejects `> 200`. |
 | `submit_2048_result(top_tile int) returns (best, reward)` | authenticated | Updates best tile (`greatest`) + awards `5×(tile/64)`. Validates power of two ≤131072. |
-| `submit_tetris_result(time_ms int, lines int) returns (best, reward)` | authenticated | Requires `lines = 40`; rejects `< 8000ms`. Updates best (`least`) + awards a bounded reward (≤50). |
+| `submit_tetris_result(time_ms int, lines int) returns (best, reward)` | authenticated | Requires `lines = 40`; rejects `< 8000ms`. Updates best (`least`) + awards a tiered reward: 40 base, +15 under 2min, +30 under 1min (stacking, max 85). |
+| `submit_wordle_result(puzzle_day int, guesses int, solved bool) returns (streak, best_streak, reward)` | authenticated | Requires `puzzle_day = current UTC day` (no backfill); idempotent per day. Updates streak + awards solve-only `5 + (6−guesses)*5` (max 30). |
 | `blackjack_deal_stake(amount int)` | authenticated | First stake of a round: deducts points, **resets** the escrow `bj_open_stake`. |
 | `blackjack_add_stake(amount int)` | authenticated | Double/split/insurance: deducts points, adds to the escrow. |
 | `blackjack_settle(payout int) returns int` | authenticated | Pays out (**capped at 2.5× the escrow**), records casino stats, clears the escrow. |
 | `roulette_multiplier(bet_id text, winning int)` | (helper) | Gross return factor for a bet (0/2/3/36). Mirrors `betDef`. |
 | `roulette_spin(bets jsonb)` | authenticated | Server-authoritative: deducts wager, picks number, pays out, records stats. |
-| `get_leaderboard_total / _reaction / _aim / _2048 / _tetris / _casino_win / _casino_net (lim int)` | anon, authenticated | Public leaderboards, each filtering `username is not null`. |
+| `get_leaderboard_total / _reaction / _aim / _2048 / _tetris / _wordle / _casino_win / _casino_net (lim int)` | anon, authenticated | Public leaderboards, each filtering `username is not null`. |
 | `add_points(amount int)`, `record_casino_result(net int)` | **revoked** | Legacy arbitrary-amount mutators. `hardening.sql` revokes EXECUTE. Do not reintroduce grants. |
 
 ### RLS

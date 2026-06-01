@@ -49,7 +49,7 @@ export const cardDecks: CardDeck[] = [
     back: 'linear-gradient(135deg, #1a1a20 0%, #2c2c34 100%)',
     border: 'rgba(255, 255, 255, 0.16)',
     locked: true,
-    cost: 100,
+    cost: 50,
     rarity: 'green',
   },
   {
@@ -62,7 +62,7 @@ export const cardDecks: CardDeck[] = [
     border: 'rgba(255, 62, 138, 0.55)',
     font: '"Courier New", ui-monospace, monospace',
     locked: true,
-    cost: 10_000,
+    cost: 750,
     rarity: 'purple',
   },
   {
@@ -76,7 +76,7 @@ export const cardDecks: CardDeck[] = [
     border: '#d4af37',
     font: 'Georgia, "Times New Roman", serif',
     locked: true,
-    cost: 100_000,
+    cost: 2_500,
     rarity: 'red',
   },
 ]

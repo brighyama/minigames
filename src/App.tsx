@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
 import { useAuth } from './lib/auth'
@@ -24,6 +24,11 @@ import { Game2048 } from './games/g2048/Game2048'
 import { ChessGame } from './games/chess/ChessGame'
 import { applyChessPalette } from './games/chess/palette'
 import { TetrisGame } from './games/tetris/TetrisGame'
+// Lazy-loaded: its ~12.5k-word guess dictionary (allowed.ts) is split into its
+// own chunk so it only downloads when a player opens Daily Word.
+const WordleGame = lazy(() =>
+  import('./games/wordle/WordleGame').then((m) => ({ default: m.WordleGame })),
+)
 
 const THEME_KEY = 'minigames:theme'
 const DECK_KEY = 'minigames:deck'
@@ -375,6 +380,7 @@ function App() {
         </div>
       </aside>
 
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/leaderboards" element={<LeaderboardsPage />} />
@@ -388,10 +394,12 @@ function App() {
         <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
         <Route path="/games/2048" element={<Game2048 />} />
         <Route path="/games/tetris" element={<TetrisGame />} />
+        <Route path="/games/wordle" element={<WordleGame />} />
         <Route path="/games/chess" element={<ChessGame />} />
         <Route path="/games/blackjack" element={<BlackjackGame />} />
         <Route path="/games/roulette" element={<RouletteGame />} />
       </Routes>
+      </Suspense>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import { fetchProfile } from '../../lib/profile'
@@ -27,15 +27,27 @@ import {
   type PieceType,
 } from './lib'
 import { PIECE_COLORS, PIECE_HIGHLIGHTS, typeForId } from './palette'
+import { TetrisSettings } from './TetrisSettings'
+import {
+  ACTION_ORDER,
+  buildCodeMap,
+  keyLabel,
+  loadHandling,
+  loadKeymap,
+  saveHandling,
+  saveKeymap,
+  type Handling,
+  type Keymap,
+  type TetrisAction,
+} from './settings'
 import './styles.css'
 
-// ---- Handling / timing constants (the "feel"). All in milliseconds. --------
+// ---- Fixed timing constants (the "feel"). All in milliseconds. -------------
+// DAS / ARR / SDF are player-tunable — see settings.ts — and read live from a
+// ref each frame, so they are NOT constants here.
 const GRAVITY_MS = 800 // time to fall one cell under natural gravity
-const SOFT_DROP_MS = 18 // time per cell while soft dropping (fast)
 const LOCK_DELAY_MS = 500 // grounded grace before a piece locks
 const MAX_LOCK_RESETS = 15 // cap on move/rotate lock-delay resets ("infinity"-lite)
-const DAS_MS = 130 // delay before auto-shift kicks in
-const ARR_MS = 20 // auto-shift repeat interval (0 = move straight to the wall)
 const NEXT_COUNT = 5 // pieces shown in the next queue
 const SPRINT_LINES = 40 // Sprint goal
 const COUNTDOWN_MS = 3000
@@ -116,6 +128,39 @@ export function TetrisGame() {
   const [finalMs, setFinalMs] = useState(0)
   const [best, setBest] = useState<number | null>(null)
   const [isPb, setIsPb] = useState(false)
+
+  // Player-tunable handling + keybinds. State drives the settings UI; refs are
+  // what the rAF loop / input handler read live (so changes apply mid-run
+  // without rebuilding the loop). Persisted to localStorage.
+  const [handling, setHandling] = useState<Handling>(() => loadHandling())
+  const [keymap, setKeymap] = useState<Keymap>(() => loadKeymap())
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const handlingRef = useRef(handling)
+  const codeMapRef = useRef(buildCodeMap(keymap))
+  const settingsOpenRef = useRef(false)
+  // The loop populates this with the unified input dispatcher so the on-screen
+  // touch controls (and any other UI) can drive the game.
+  const actionsRef = useRef<((action: TetrisAction, down: boolean) => void) | null>(null)
+
+  const updateHandling = useCallback((patch: Partial<Handling>) => {
+    setHandling((prev) => {
+      const next = { ...prev, ...patch }
+      handlingRef.current = next
+      saveHandling(next)
+      return next
+    })
+  }, [])
+
+  const updateKeymap = useCallback((next: Keymap) => {
+    codeMapRef.current = buildCodeMap(next)
+    saveKeymap(next)
+    setKeymap(next)
+  }, [])
+
+  // Opening the settings modal pauses the run (the loop reads this ref).
+  useEffect(() => {
+    settingsOpenRef.current = settingsOpen
+  }, [settingsOpen])
 
   // All live game state is mutable (refs) so the rAF loop and React handlers
   // share it without forcing a re-render every frame — the canvas is painted
@@ -378,55 +423,65 @@ export function TetrisGame() {
     }
 
     // ---- Input -------------------------------------------------------------
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (statusRef.current !== 'playing') return
+    // Single dispatcher for every input source (keyboard + on-screen touch
+    // buttons). `down` is the press/release edge — only the held actions (move,
+    // soft drop) care about release.
+    const applyAction = (action: TetrisAction, down: boolean) => {
+      if (statusRef.current !== 'playing' || settingsOpenRef.current) return
       const g = gameRef.current
-      const k = e.key
-      const code = e.code
-      // Prevent page scroll for the keys we use.
-      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(k)) e.preventDefault()
-      if (e.repeat) return // we manage auto-repeat ourselves (DAS/ARR)
-
-      switch (true) {
-        case k === 'ArrowLeft':
-          g.dasDir = -1
-          g.dasTimer = 0
-          g.dasCharged = false
-          move(-1)
-          break
-        case k === 'ArrowRight':
-          g.dasDir = 1
-          g.dasTimer = 0
-          g.dasCharged = false
-          move(1)
-          break
-        case k === 'ArrowDown':
-          g.softDrop = true
-          break
-        case k === 'ArrowUp' || k === 'x' || k === 'X':
-          rotate(1)
-          break
-        case k === 'z' || k === 'Z' || code === 'ControlLeft' || code === 'ControlRight':
-          rotate(-1)
-          break
-        case k === 'a' || k === 'A':
-          rotate(2)
-          break
-        case k === ' ':
-          hardDrop()
-          break
-        case code === 'ShiftLeft' || code === 'ShiftRight' || k === 'c' || k === 'C':
-          hold()
-          break
+      if (down) {
+        switch (action) {
+          case 'moveLeft':
+            g.dasDir = -1
+            g.dasTimer = 0
+            g.dasCharged = false
+            move(-1)
+            break
+          case 'moveRight':
+            g.dasDir = 1
+            g.dasTimer = 0
+            g.dasCharged = false
+            move(1)
+            break
+          case 'softDrop':
+            g.softDrop = true
+            break
+          case 'rotateCW':
+            rotate(1)
+            break
+          case 'rotateCCW':
+            rotate(-1)
+            break
+          case 'rotate180':
+            rotate(2)
+            break
+          case 'hardDrop':
+            hardDrop()
+            break
+          case 'hold':
+            hold()
+            break
+        }
+      } else {
+        if (action === 'moveLeft' && g.dasDir === -1) g.dasDir = 0
+        else if (action === 'moveRight' && g.dasDir === 1) g.dasDir = 0
+        else if (action === 'softDrop') g.softDrop = false
       }
+    }
+    actionsRef.current = applyAction
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (settingsOpenRef.current) return
+      const action = codeMapRef.current.get(e.code)
+      if (!action) return
+      e.preventDefault() // stop page scroll / browser shortcuts for bound keys
+      if (e.repeat) return // we manage auto-repeat ourselves (DAS/ARR)
+      applyAction(action, true)
     }
 
     const onKeyUp = (e: KeyboardEvent) => {
-      const g = gameRef.current
-      const k = e.key
-      if (k === 'ArrowLeft' && g.dasDir === -1) g.dasDir = 0
-      else if (k === 'ArrowRight' && g.dasDir === 1) g.dasDir = 0
-      else if (k === 'ArrowDown') g.softDrop = false
+      const action = codeMapRef.current.get(e.code)
+      if (action) applyAction(action, false)
     }
 
     window.addEventListener('keydown', onKeyDown)
@@ -436,37 +491,44 @@ export function TetrisGame() {
     const update = (dt: number) => {
       const g = gameRef.current
 
+      const { das, arr, sdf } = handlingRef.current
+
       // Auto-shift (DAS -> ARR).
       if (g.dasDir !== 0) {
         if (!g.dasCharged) {
           g.dasTimer += dt
-          if (g.dasTimer >= DAS_MS) {
+          if (g.dasTimer >= das) {
             g.dasCharged = true
             g.dasTimer = 0
-            if (ARR_MS <= 0) while (move(g.dasDir)) { /* slam to wall */ }
+            if (arr <= 0) while (move(g.dasDir)) { /* slam to wall */ }
           }
-        } else if (ARR_MS <= 0) {
+        } else if (arr <= 0) {
           while (move(g.dasDir)) { /* hold against wall */ }
         } else {
           g.dasTimer += dt
-          while (g.dasTimer >= ARR_MS) {
-            g.dasTimer -= ARR_MS
+          while (g.dasTimer >= arr) {
+            g.dasTimer -= arr
             if (!move(g.dasDir)) break
           }
         }
       }
 
-      // Gravity (soft drop just shortens the interval).
-      const interval = g.softDrop ? SOFT_DROP_MS : GRAVITY_MS
-      g.gravityAcc += dt
-      while (g.gravityAcc >= interval) {
-        g.gravityAcc -= interval
-        const next = tryMove(g.board, g.current, 0, 1)
-        if (next) {
-          g.current = next
-        } else {
-          g.gravityAcc = 0
-          break
+      // Gravity (soft drop shortens the interval; sdf === 0 = instant sonic drop).
+      if (g.softDrop && sdf <= 0) {
+        g.current = hardDropPosition(g.board, g.current) // drop to floor, no lock
+        g.gravityAcc = 0
+      } else {
+        const interval = g.softDrop ? sdf : GRAVITY_MS
+        g.gravityAcc += dt
+        while (g.gravityAcc >= interval) {
+          g.gravityAcc -= interval
+          const next = tryMove(g.board, g.current, 0, 1)
+          if (next) {
+            g.current = next
+          } else {
+            g.gravityAcc = 0
+            break
+          }
         }
       }
 
@@ -632,6 +694,7 @@ export function TetrisGame() {
       let dt = now - last
       last = now
       if (dt > 100) dt = 100 // clamp after tab-out
+      if (settingsOpenRef.current) dt = 0 // settings modal open = paused
 
       const status = statusRef.current
       if (status === 'countdown') {
@@ -658,6 +721,7 @@ export function TetrisGame() {
       window.removeEventListener('resize', resize)
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
+      actionsRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setStatus, submitRun])
@@ -678,6 +742,14 @@ export function TetrisGame() {
       <div className="tetris-header">
         <h1 className="tetris-title">tetris</h1>
         <span className="tetris-mode">sprint · 40 lines</span>
+        <button
+          className="tetris-gear"
+          onClick={() => setSettingsOpen(true)}
+          aria-label="Settings"
+          title="Settings (handling & controls)"
+        >
+          ⚙
+        </button>
       </div>
 
       <div className="tetris-stage" ref={stageRef}>
@@ -758,14 +830,32 @@ export function TetrisGame() {
         </div>
       </div>
 
+      {/* On-screen controls for touch devices (hidden on pointer-fine screens). */}
+      <div className="tetris-touch" aria-hidden="true">
+        <div className="tetris-touch-group">
+          <TouchButton action="rotateCCW" actionsRef={actionsRef} className="is-rotate">↺</TouchButton>
+          <TouchButton action="rotateCW" actionsRef={actionsRef} className="is-rotate">↻</TouchButton>
+          <TouchButton action="hold" actionsRef={actionsRef}>hold</TouchButton>
+        </div>
+        <div className="tetris-touch-group">
+          <TouchButton action="moveLeft" actionsRef={actionsRef}>◀</TouchButton>
+          <TouchButton action="softDrop" actionsRef={actionsRef}>▼</TouchButton>
+          <TouchButton action="moveRight" actionsRef={actionsRef}>▶</TouchButton>
+          <TouchButton action="hardDrop" actionsRef={actionsRef} className="is-harddrop">⤓</TouchButton>
+        </div>
+      </div>
+
       <div className="tetris-help">
-        <span><kbd>←</kbd><kbd>→</kbd> move</span>
-        <span><kbd>↓</kbd> soft drop</span>
-        <span><kbd>space</kbd> hard drop</span>
-        <span><kbd>↑</kbd>/<kbd>x</kbd> rotate</span>
-        <span><kbd>z</kbd> rotate ccw</span>
-        <span><kbd>a</kbd> 180</span>
-        <span><kbd>shift</kbd>/<kbd>c</kbd> hold</span>
+        {ACTION_ORDER.map((action) => (
+          <span key={action}>
+            {keymap[action].length > 0 ? (
+              keymap[action].map((code, i) => <kbd key={i}>{keyLabel(code)}</kbd>)
+            ) : (
+              <kbd className="is-unbound">—</kbd>
+            )}{' '}
+            {HELP_LABELS[action]}
+          </span>
+        ))}
       </div>
 
       <div className="tetris-note">
@@ -774,6 +864,61 @@ export function TetrisGame() {
         ) : null}
         {!user && <>sign in to save your time to the leaderboard</>}
       </div>
+
+      {settingsOpen && (
+        <TetrisSettings
+          handling={handling}
+          keymap={keymap}
+          onChangeHandling={updateHandling}
+          onChangeKeymap={updateKeymap}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </main>
+  )
+}
+
+// Short labels for the dynamic help strip (mirrors keymap actions).
+const HELP_LABELS: Record<TetrisAction, string> = {
+  moveLeft: 'left',
+  moveRight: 'right',
+  softDrop: 'soft drop',
+  hardDrop: 'hard drop',
+  rotateCW: 'rotate',
+  rotateCCW: 'rotate ccw',
+  rotate180: '180',
+  hold: 'hold',
+}
+
+// A single on-screen control. Routes press/release through the loop's action
+// dispatcher so touch input behaves exactly like the keyboard (DAS, etc.).
+function TouchButton({
+  action,
+  actionsRef,
+  className,
+  children,
+}: {
+  action: TetrisAction
+  actionsRef: RefObject<((action: TetrisAction, down: boolean) => void) | null>
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <button
+      className={`tetris-touch-btn${className ? ' ' + className : ''}`}
+      onPointerDown={(e) => {
+        e.preventDefault()
+        actionsRef.current?.(action, true)
+      }}
+      onPointerUp={(e) => {
+        e.preventDefault()
+        actionsRef.current?.(action, false)
+      }}
+      onPointerLeave={() => actionsRef.current?.(action, false)}
+      onPointerCancel={() => actionsRef.current?.(action, false)}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      {children}
+    </button>
   )
 }

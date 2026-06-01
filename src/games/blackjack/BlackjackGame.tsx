@@ -23,7 +23,7 @@ import './styles.css'
 
 type Phase = 'betting' | 'player_turn' | 'dealer_reveal' | 'settled'
 
-const CHIPS = [10, 100, 1_000, 10_000, 100_000]
+const CHIPS = [10, 25, 100, 500, 1_000]
 const DEFAULT_DEMO_BALANCE = 10_000
 const MIN_BET = 10
 

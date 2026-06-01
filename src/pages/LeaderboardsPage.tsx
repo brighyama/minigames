@@ -9,6 +9,7 @@ import {
   fetchAimLeaderboard,
   fetch2048Leaderboard,
   fetchTetrisLeaderboard,
+  fetchWordleLeaderboard,
   fetchCasinoWinLeaderboard,
   fetchCasinoNetLeaderboard,
 } from '../lib/leaderboards'
@@ -85,6 +86,11 @@ export function LeaderboardsPage() {
           scoreLabel="40L time"
           load={() => fetchTetrisLeaderboard(100)}
           formatScore={(s) => formatSprint(s)}
+        />
+        <Leaderboard
+          title="Daily Word"
+          scoreLabel="Best streak"
+          load={() => fetchWordleLeaderboard(100)}
         />
         <Leaderboard
           title="Biggest Win"

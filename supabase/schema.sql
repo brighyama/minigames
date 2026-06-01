@@ -532,9 +532,9 @@ drop function if exists public.submit_tetris_result(int, int);
 -- Settle a completed 40-line Sprint. lines must equal 40 (only finished runs
 -- count); the time is range-checked against a superhuman floor so a client
 -- can't fabricate an impossible record. Updates the account best (via least)
--- and awards a bounded reward derived from the time. Returns (best, reward).
---   reward = 5 + floor(max(0, 120000 - time_ms) / 3000), capped at 50.
---   (120s -> 5, 60s -> 25, 30s -> 35, <=15s -> capped 50). Always in [5,50].
+-- and awards a bounded, time-tiered reward. Returns (best, reward).
+--   40 base, +15 if under 2min, +30 if under 1min (bonuses stack).
+--   (>=120s -> 40, <120s -> 55, <60s -> 85). Always in [40,85].
 create or replace function public.submit_tetris_result(time_ms int, lines int)
 returns table (best int, reward int)
 language plpgsql security definer set search_path = public
@@ -553,8 +553,9 @@ begin
     raise exception 'time_ms out of plausible range';
   end if;
 
-  award := 5 + (greatest(0, 120000 - time_ms) / 3000);
-  award := least(award, 50);
+  award := 40;
+  if time_ms < 120000 then award := award + 15; end if; -- under 2 min
+  if time_ms < 60000  then award := award + 30; end if; -- under 1 min
 
   select tetris_sprint_ms into current_best
     from public.profiles where user_id = auth.uid();
@@ -586,3 +587,104 @@ as $$
   limit lim;
 $$;
 grant execute on function public.get_leaderboard_tetris(int) to anon, authenticated;
+
+-- ===========================================================================
+-- Daily Word (Wordle-style)
+-- ===========================================================================
+
+-- A date-seeded 5-letter puzzle, the same for everyone each UTC day. The
+-- competitive metric is the solve streak. These columns change only via
+-- submit_wordle_result (they are not in hardening.sql's cosmetic column grant).
+--   wordle_last_day    UTC day index of the last submitted puzzle (null = none)
+--   wordle_streak      current consecutive-day solve streak
+--   wordle_best_streak max streak ever (drives the leaderboard)
+--   wordle_wins        total puzzles solved
+--   wordle_played      total puzzles attempted
+alter table public.profiles
+  add column if not exists wordle_last_day int,
+  add column if not exists wordle_streak int not null default 0,
+  add column if not exists wordle_best_streak int not null default 0,
+  add column if not exists wordle_wins int not null default 0,
+  add column if not exists wordle_played int not null default 0;
+
+drop function if exists public.submit_wordle_result(int, int, boolean);
+
+-- Settle today's puzzle. puzzle_day MUST equal the server's current UTC day
+-- index (no backfilling streaks); guesses in 1..6. One submission per day
+-- (idempotent — a second call that day no-ops). Solving continues the streak
+-- only if the previous solved day was exactly yesterday; a loss resets it.
+-- Awards a bounded, solve-only reward (more for fewer guesses).
+--   reward = 5 + (6 - guesses) * 5  ->  30 (1 guess) .. 5 (6 guesses); 0 on loss.
+create or replace function public.submit_wordle_result(puzzle_day int, guesses int, solved boolean)
+returns table (streak int, best_streak int, reward int)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  today      int := floor(extract(epoch from now()) / 86400)::int;
+  last_day   int;
+  cur_streak int;
+  best       int;
+  award      int := 0;
+begin
+  if puzzle_day is null or puzzle_day <> today then
+    raise exception 'wordle submission must be for the current day';
+  end if;
+  if guesses is null or guesses < 1 or guesses > 6 then
+    raise exception 'guesses out of range';
+  end if;
+
+  select wordle_last_day, wordle_streak, wordle_best_streak
+    into last_day, cur_streak, best
+    from public.profiles where user_id = auth.uid();
+
+  cur_streak := coalesce(cur_streak, 0);
+  best := coalesce(best, 0);
+
+  -- Idempotent: already played today -> return current stats unchanged.
+  if last_day is not null and last_day = today then
+    return query select cur_streak, best, 0;
+    return;
+  end if;
+
+  if solved then
+    if last_day is not null and last_day = today - 1 then
+      cur_streak := cur_streak + 1;
+    else
+      cur_streak := 1;
+    end if;
+    best := greatest(best, cur_streak);
+    award := 5 + (6 - guesses) * 5;
+  else
+    cur_streak := 0;
+  end if;
+
+  update public.profiles
+     set wordle_last_day    = today,
+         wordle_streak      = cur_streak,
+         wordle_best_streak = best,
+         wordle_wins        = wordle_wins + (case when solved then 1 else 0 end),
+         wordle_played      = wordle_played + 1,
+         points             = points + award,
+         lifetime_points    = lifetime_points + award,
+         updated_at         = now()
+   where user_id = auth.uid();
+
+  return query select cur_streak, best, award;
+end;
+$$;
+grant execute on function public.submit_wordle_result(int, int, boolean) to authenticated;
+
+create or replace function public.get_leaderboard_wordle(lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.wordle_best_streak desc) as int) as rank,
+    p.username,
+    p.wordle_best_streak as score
+  from public.profiles p
+  where p.username is not null and p.wordle_best_streak > 0
+  order by p.wordle_best_streak desc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_wordle(int) to anon, authenticated;

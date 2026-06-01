@@ -96,6 +96,22 @@ export async function fetchTetrisLeaderboard(
   return { rows }
 }
 
+export async function fetchWordleLeaderboard(
+  limit = 100,
+): Promise<LeaderboardResult> {
+  if (!supabase) return { rows: [], error: 'Auth is not configured.' }
+  const { data, error } = await supabase.rpc('get_leaderboard_wordle', {
+    lim: limit,
+  })
+  if (error) return { rows: [], error: error.message }
+  const rows = (data ?? []).map((r: ScoreRow) => ({
+    rank: r.rank,
+    username: r.username,
+    score: r.score,
+  }))
+  return { rows }
+}
+
 export async function fetchCasinoWinLeaderboard(
   limit = 100,
 ): Promise<LeaderboardResult> {
