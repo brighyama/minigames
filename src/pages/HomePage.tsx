@@ -18,14 +18,14 @@ const games: Game[] = [
     name: 'wordle',
     tagline: 'guess the word of the day',
     path: '/games/wordle',
-    gradient: 'linear-gradient(135deg, #2e7d46 0%, #1f5230 50%, #b59230 100%)',
+    gradient: 'linear-gradient(135deg, #2e7d46 0%, #5a8b2c 50%, #b59230 100%)',
   },
   {
     id: 'reaction',
     name: 'reaction time',
     tagline: 'test your reflexes',
     path: '/games/reaction',
-    gradient: 'linear-gradient(135deg, #c0392b 0%, #2e6b47 100%)',
+    gradient: 'linear-gradient(135deg, #c0392b 0%, #5c1c15 49%, #000000 50%, #1e5836 51%, #5cdb91 100%)',
   },
   {
     id: 'aim-trainer',
@@ -49,6 +49,20 @@ const games: Game[] = [
     gradient: 'linear-gradient(135deg, #22d3d3 0%, #b15bd8 45%, #f59331 100%)',
   },
   {
+    id: 'pattern',
+    name: 'memory matrix',
+    tagline: 'visual memory game',
+    path: '/games/pattern',
+    gradient: 'linear-gradient(135deg, #ffffff 0%, #3b7044 75%, #000000 100%)',
+  },
+  {
+    id: 'color-match',
+    name: 'color match',
+    tagline: 'match the flash',
+    path: '/games/color-match',
+    gradient: 'linear-gradient(135deg, #ff4d6d 0%, #ffd166 33%, #06d6a0 66%, #4d96ff 100%)',
+  },
+  {
     id: 'chess',
     name: 'chess',
     tagline: 'play the engine',
@@ -60,7 +74,7 @@ const games: Game[] = [
     name: 'minesweeper',
     tagline: 'clear the field',
     path: '/games/minesweeper',
-    gradient: 'linear-gradient(135deg, #4aa3ff 0%, #475569 55%, #1f2937 100%)',
+    gradient: 'linear-gradient(135deg, #db3924 0%, #7e2f2f 55%, #471717 100%)',
   },
 ]
 

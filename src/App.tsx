@@ -26,6 +26,8 @@ import { applyChessPalette } from './games/chess/palette'
 import { TetrisGame } from './games/tetris/TetrisGame'
 import { MinesweeperGame } from './games/minesweeper/MinesweeperGame'
 import { CasesGame } from './games/cases/CasesGame'
+import { PatternGame } from './games/pattern/PatternGame'
+import { ColorMatchGame } from './games/colorMatch/ColorMatchGame'
 // Lazy-loaded: its ~12.5k-word guess dictionary (allowed.ts) is split into its
 // own chunk so it only downloads when a player opens Daily Word.
 const WordleGame = lazy(() =>
@@ -124,9 +126,17 @@ function App() {
     if (theme.locked) {
       root.style.setProperty('--aim-circle-a', theme.accent2 ?? DEFAULT_ACCENT_2)
       root.style.setProperty('--aim-circle-b', theme.accent1 ?? DEFAULT_ACCENT_1)
+      root.style.setProperty('--pattern-board-surface', 'rgba(0, 0, 0, 0.32)')
+      root.style.setProperty('--pattern-tile-active-a', theme.accent2 ?? DEFAULT_ACCENT_2)
+      root.style.setProperty('--pattern-tile-active-b', theme.accent1 ?? DEFAULT_ACCENT_1)
+      root.style.setProperty('--pattern-tile-active-fg', '#ffffff')
     } else {
       root.style.setProperty('--aim-circle-a', '#ffffff')
       root.style.setProperty('--aim-circle-b', '#e2e2e2')
+      root.style.setProperty('--pattern-board-surface', 'rgba(128, 128, 128, 0.28)')
+      root.style.setProperty('--pattern-tile-active-a', '#ffffff')
+      root.style.setProperty('--pattern-tile-active-b', '#f2f2f2')
+      root.style.setProperty('--pattern-tile-active-fg', '#ffffff')
     }
 
     // 2048 tiles: unlockable themes get a unique ramp; defaults use CSS colors.
@@ -428,6 +438,8 @@ function App() {
         <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
         <Route path="/games/2048" element={<Game2048 />} />
         <Route path="/games/tetris" element={<TetrisGame />} />
+        <Route path="/games/pattern" element={<PatternGame />} />
+        <Route path="/games/color-match" element={<ColorMatchGame />} />
         <Route path="/games/minesweeper" element={<MinesweeperGame />} />
         <Route path="/games/wordle" element={<WordleGame />} />
         <Route path="/games/chess" element={<ChessGame />} />

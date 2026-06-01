@@ -18,6 +18,8 @@ create table if not exists public.profiles (
   last_daily_claim    timestamptz,
   best_reaction_avg   int,                       -- lowest avg ms over 5; null = no record
   aim_high_score      int  not null default 0,   -- most circles in a 20s round
+  pattern_best_level  int  not null default 0,   -- highest completed Memory Matrix level
+  color_match_best_score int not null default 0, -- best 5-round Color Match score
   casino_net          bigint not null default 0, -- cumulative casino net (can be negative)
   casino_biggest_win  int  not null default 0,   -- best single-round net win
   updated_at          timestamptz not null default now()
@@ -30,6 +32,8 @@ alter table public.profiles add column if not exists lifetime_points    int  not
 alter table public.profiles add column if not exists last_daily_claim   timestamptz;
 alter table public.profiles add column if not exists best_reaction_avg  int;
 alter table public.profiles add column if not exists aim_high_score     int  not null default 0;
+alter table public.profiles add column if not exists pattern_best_level int  not null default 0;
+alter table public.profiles add column if not exists color_match_best_score int not null default 0;
 -- Casino stats: cumulative net (can be negative) + best single-round win.
 alter table public.profiles add column if not exists casino_net         bigint not null default 0;
 alter table public.profiles add column if not exists casino_biggest_win int    not null default 0;
@@ -240,6 +244,74 @@ end;
 $$;
 grant execute on function public.update_aim_high_score(int) to authenticated;
 
+create or replace function public.submit_pattern_result(completed_level int)
+returns table (best int, reward int)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+  bounded_level int;
+begin
+  if completed_level is null or completed_level < 0 or completed_level > 80 then
+    raise exception 'completed_level out of plausible range';
+  end if;
+
+  bounded_level := completed_level;
+  reward := case
+    when bounded_level = 0 then 0
+    else least(60, 5 + (bounded_level * 2))
+  end;
+
+  select pattern_best_level into current_best
+    from public.profiles where user_id = auth.uid();
+
+  best := greatest(current_best, bounded_level);
+
+  update public.profiles
+     set pattern_best_level = best,
+         points             = points + reward,
+         lifetime_points    = lifetime_points + reward,
+         updated_at         = now()
+   where user_id = auth.uid();
+
+  return next;
+end;
+$$;
+grant execute on function public.submit_pattern_result(int) to authenticated;
+
+create or replace function public.submit_color_match_result(score int)
+returns table (best int, reward int)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+begin
+  if score is null or score < 0 or score > 5000 then
+    raise exception 'score out of plausible range';
+  end if;
+
+  reward := case
+    when score = 0 then 0
+    else least(75, 10 + (score / 100))
+  end;
+
+  select color_match_best_score into current_best
+    from public.profiles where user_id = auth.uid();
+
+  best := greatest(current_best, score);
+
+  update public.profiles
+     set color_match_best_score = best,
+         points                 = points + reward,
+         lifetime_points        = lifetime_points + reward,
+         updated_at             = now()
+   where user_id = auth.uid();
+
+  return next;
+end;
+$$;
+grant execute on function public.submit_color_match_result(int) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Per-game leaderboards: same shape as get_leaderboard_total, public-read.
 -- ---------------------------------------------------------------------------
@@ -273,6 +345,36 @@ as $$
   limit lim;
 $$;
 grant execute on function public.get_leaderboard_aim(int) to anon, authenticated;
+
+create or replace function public.get_leaderboard_pattern(lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.pattern_best_level desc, p.username asc) as int) as rank,
+    p.username,
+    p.pattern_best_level as score
+  from public.profiles p
+  where p.username is not null and p.pattern_best_level > 0
+  order by p.pattern_best_level desc, p.username asc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_pattern(int) to anon, authenticated;
+
+create or replace function public.get_leaderboard_color_match(lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.color_match_best_score desc, p.username asc) as int) as rank,
+    p.username,
+    p.color_match_best_score as score
+  from public.profiles p
+  where p.username is not null and p.color_match_best_score > 0
+  order by p.color_match_best_score desc, p.username asc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_color_match(int) to anon, authenticated;
 
 -- ===========================================================================
 -- Casino (blackjack + roulette)

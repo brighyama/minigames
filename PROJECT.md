@@ -1,7 +1,7 @@
 # Minigames — Project Reference
 
 A personal hub of small browser games with shared progression: accounts, points, daily bonuses, a shop, themes, card decks, achievement-style rarities, and leaderboards. Two families of games:
-- **Skill games** — Reaction Test, Aim Trainer, 2048, Tetris, Daily Word, Chess, Minesweeper.
+- **Skill games** — Reaction Test, Aim Trainer, Memory Matrix, Color Match, 2048, Tetris, Daily Word, Chess, Minesweeper.
 - **Casino games** — Blackjack, Roulette, Cases (wager points). Grouped under a "Casino" section on the home page.
 
 **One unified visual theme spans every game.** The active theme reskins the whole surface — page gradient, accents, card decks, and per-game palettes — and every game uses the same chamfered `clip-path` geometry (never `border-radius`). See "Unified theming across games" below.
@@ -79,6 +79,8 @@ src/
                               backend, theming, and gotchas — read it before working on that game.
     reaction/                 Full-screen reaction-time test.            → reaction/CONTEXT.md
     aim/                      20s click-the-target trainer.              → aim/CONTEXT.md
+    pattern/                  HumanBenchmark-style visual memory game.   → pattern/CONTEXT.md
+    colorMatch/               Dialed-inspired color memory game.          → colorMatch/CONTEXT.md
     g2048/                    Classic 2048 + swappable AI solver.        → g2048/CONTEXT.md
     tetris/                   TETR.IO-style Sprint 40L (canvas).         → tetris/CONTEXT.md
     wordle/                   Date-seeded daily 5-letter word game.      → wordle/CONTEXT.md
@@ -97,6 +99,8 @@ src/
 | --- | --- | --- | --- | --- |
 | Reaction Test | `/games/reaction` | `reaction/` | Lowest rolling-5 avg (ms) | `award_reaction`, `update_reaction_best` |
 | Aim Trainer | `/games/aim` | `aim/` | Most targets in 20s | `award_aim`, `update_aim_high_score` |
+| Memory Matrix | `/games/pattern` | `pattern/` | Highest completed level | `submit_pattern_result` |
+| Color Match | `/games/color-match` | `colorMatch/` | Best 5-round score | `submit_color_match_result` |
 | 2048 | `/games/2048` | `g2048/` | Highest tile reached | `submit_2048_result` |
 | Tetris | `/games/tetris` | `tetris/` | Fastest 40-line sprint (ms) | `submit_tetris_result` |
 | Daily Word | `/games/wordle` | `wordle/` | Best daily solve streak | `submit_wordle_result` |
@@ -142,7 +146,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 - **Geometry.** No game uses `border-radius`. All panels, tiles, buttons, and overlays use the shared `clip-path` chamfer shapes (`--shape-octagon`, `--shape-octagon-sm`, `--shape-diagonal`) defined at the top of [App.css](src/App.css).
 - **Per-game color hooks** set by the theme effect:
   - `--accent-1/2` — reaction backgrounds, aim/tetris accents, particles (general-purpose).
-  - `--board-*` — shared board surfaces for grid/board games. Wordle, 2048, Tetris, Chess, and Minesweeper consume these for shells, cell backgrounds, grid lines, and glows; future board games should prefer these variables before adding bespoke skin hooks.
+  - `--board-*` — shared board surfaces for grid/board games and framed skill games. Wordle, Memory Matrix, Color Match, 2048, Tetris, Chess, and Minesweeper consume these for shells, cell backgrounds, grid lines, and glows; future board games should prefer these variables before adding bespoke skin hooks.
   - `--aim-circle-a/b` — aim-trainer target gradient (`aim/palette` behavior).
   - `--g2048-bg-*/--g2048-fg-*` — 2048 tile palette (`applyTilePalette`).
   - `--chess-light/dark/hint/capture` — chess board (`applyChessPalette`).
@@ -170,7 +174,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 ### Points + lifetime points
 
 - `profiles.points` (spendable balance) and `profiles.lifetime_points` (monotonic, drives the Total Points leaderboard).
-- All point gains go through **purpose-specific server RPCs that compute the amount themselves** (`award_reaction`, `award_aim`, `submit_2048_result`, `submit_tetris_result`, `claim_daily_points`, `roulette_spin`, `blackjack_settle`). There is **no generic "add N points" endpoint** callable by clients — see "Security model". `spend_points` (shop) is the only remaining client-callable mutation, and it can only *decrease* points.
+- All point gains go through **purpose-specific server RPCs that compute the amount themselves** (`award_reaction`, `award_aim`, `submit_pattern_result`, `submit_color_match_result`, `submit_2048_result`, `submit_tetris_result`, `claim_daily_points`, `roulette_spin`, `blackjack_settle`). There is **no generic "add N points" endpoint** callable by clients — see "Security model". `spend_points` (shop) is the only remaining client-callable mutation, and it can only *decrease* points.
 - Displayed in the top-right cluster (home page only).
 - `window.dispatchEvent(new CustomEvent('points-changed'))` is the convention for triggering a fresh profile fetch in App.tsx. Any code that mutates points fires this.
 
@@ -193,7 +197,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 ### Leaderboards
 
 - Route `/leaderboards`. Cards rendered in a responsive grid.
-- Eleven boards: **Total Points**, **Reaction Time** (lower = better, `X ms`), **Aim Trainer**, **2048** (best tile), **Tetris Sprint** (lower = better, 40-line time), **Daily Word** (best solve streak), **Minesweeper · Easy/Medium/Hard** (lower = better, clear time), **Biggest Win** (single casino round), **Casino Net** (cumulative, signed display).
+- Thirteen boards: **Total Points**, **Reaction Time** (lower = better, `X ms`), **Aim Trainer**, **Memory Matrix**, **Color Match**, **2048** (best tile), **Tetris Sprint** (lower = better, 40-line time), **Daily Word** (best solve streak), **Minesweeper · Easy/Medium/Hard** (lower = better, clear time), **Biggest Win** (single casino round), **Casino Net** (cumulative, signed display).
 - All driven by `SECURITY DEFINER` RPCs that filter `username is not null`. Users without a username never appear — the page shows a gold banner reminding them to set one.
 
 ### Home page categories & top-right cluster
@@ -218,6 +222,8 @@ The goal is that **every game looks like part of the same site** under whatever 
 | `last_daily_claim` | `timestamptz` | Set by `claim_daily_points`. Null = never claimed. |
 | `best_reaction_avg` | `int` | Lowest rolling-5 avg in ms. Null = no record. |
 | `aim_high_score` | `int` | Most circles in 20s. 0 = no record. |
+| `pattern_best_level` | `int` | Highest completed Memory Matrix level. 0 = no record. |
+| `color_match_best_score` | `int` | Best 5-round Color Match score. 0 = no record. |
 | `g2048_high_score` | `int` | Highest **tile** ever reached in 2048 (e.g. 2048), not a merge score. |
 | `tetris_sprint_ms` | `int` | Best time (ms) to clear 40 lines in Tetris Sprint. Null = no record. **Lower is better.** |
 | `wordle_last_day` | `int` | UTC day index of the last submitted Daily Word puzzle. Null = never played. |
@@ -243,6 +249,8 @@ Grants below reflect the **post-`hardening.sql`** state (run schema.sql, then ha
 | `award_aim(best_score int) returns int` | authenticated | Server-computes the aim reward (`5 + score/2`, score clamped ≤200). |
 | `update_reaction_best(avg_ms int)` | authenticated | Writes the best avg only if better (lower). Rejects `< 100ms`. |
 | `update_aim_high_score(score int)` | authenticated | Writes the high score only if better. Rejects `> 200`. |
+| `submit_pattern_result(completed_level int) returns (best, reward)` | authenticated | Updates best Memory Matrix level (`greatest`) + awards `5 + level*2`, capped at 60. Rejects `< 0` or `> 80`. |
+| `submit_color_match_result(score int) returns (best, reward)` | authenticated | Updates best 5-round Color Match score (`greatest`) + awards `10 + floor(score/100)`, capped at 75. Rejects `< 0` or `> 5000`; score `0` awards `0`. |
 | `submit_2048_result(top_tile int) returns (best, reward)` | authenticated | Updates best tile (`greatest`) + awards `5×(tile/64)`. Validates power of two ≤131072. |
 | `submit_tetris_result(time_ms int, lines int) returns (best, reward)` | authenticated | Requires `lines = 40`; rejects `< 8000ms`. Updates best (`least`) + awards a tiered reward: 40 base, +15 under 2min, +30 under 1min (stacking, max 85). |
 | `submit_wordle_result(puzzle_day int, guesses int, solved bool) returns (streak, best_streak, reward)` | authenticated | Requires `puzzle_day = current UTC day` (no backfill); idempotent per day. Updates streak + awards solve-only `5 + (6−guesses)*5` (max 30). |
@@ -253,7 +261,7 @@ Grants below reflect the **post-`hardening.sql`** state (run schema.sql, then ha
 | `roulette_multiplier(bet_id text, winning int)` | (helper) | Gross return factor for a bet (0/2/3/36). Mirrors `betDef`. |
 | `roulette_spin(bets jsonb)` | authenticated | Server-authoritative: deducts wager, picks number, pays out, records stats. |
 | `cases_open(case_id text, wager int) returns (item_index, mult_x100, payout, net, new_points, reward_kind, unlock_id, unlock_name, duplicate)` | authenticated | Server-authoritative case open: deducts wager, weighted-draws an item, pays chip rewards or duplicate cosmetic refunds, unlocks first-time cosmetics, records casino stats. Item tables mirror `src/games/cases/lib.ts`. |
-| `get_leaderboard_total / _reaction / _aim / _2048 / _tetris / _wordle / _casino_win / _casino_net (lim int)` | anon, authenticated | Public leaderboards, each filtering `username is not null`. |
+| `get_leaderboard_total / _reaction / _aim / _pattern / _color_match / _2048 / _tetris / _wordle / _casino_win / _casino_net (lim int)` | anon, authenticated | Public leaderboards, each filtering `username is not null`. |
 | `get_leaderboard_minesweeper(diff text, lim int)` | anon, authenticated | Public per-difficulty Minesweeper board (fastest time asc). `diff` ∈ easy/medium/hard. |
 | `add_points(amount int)`, `record_casino_result(net int)` | **revoked** | Legacy arbitrary-amount mutators. `hardening.sql` revokes EXECUTE. Do not reintroduce grants. |
 
@@ -298,6 +306,7 @@ update public.profiles set points = 10000, lifetime_points = greatest(lifetime_p
 update public.profiles set unlocks = array[]::text[] where username = 'your-username';
 update public.profiles set last_daily_claim = null where username = 'your-username';
 update public.profiles set best_reaction_avg = null, aim_high_score = 0,
+       pattern_best_level = 0, color_match_best_score = 0,
        g2048_high_score = 0, tetris_sprint_ms = null where username = 'your-username';
 update public.profiles set casino_net = 0, casino_biggest_win = 0 where username = 'your-username';
 ```

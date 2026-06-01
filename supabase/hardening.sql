@@ -158,6 +158,83 @@ end;
 $$;
 grant execute on function public.award_aim(int) to authenticated;
 
+-- Memory Matrix: completed level is the number of full patterns solved before
+-- a miss. Reward is bounded at 60 even if a client reports the plausible cap.
+alter table public.profiles
+  add column if not exists pattern_best_level int not null default 0;
+
+create or replace function public.submit_pattern_result(completed_level int)
+returns table (best int, reward int)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+  bounded_level int;
+begin
+  if completed_level is null or completed_level < 0 or completed_level > 80 then
+    raise exception 'completed_level out of plausible range';
+  end if;
+
+  bounded_level := completed_level;
+  reward := case
+    when bounded_level = 0 then 0
+    else least(60, 5 + (bounded_level * 2))
+  end;
+
+  select pattern_best_level into current_best
+    from public.profiles where user_id = auth.uid();
+
+  best := greatest(current_best, bounded_level);
+
+  update public.profiles
+     set pattern_best_level = best,
+         points             = points + reward,
+         lifetime_points    = lifetime_points + reward,
+         updated_at         = now()
+   where user_id = auth.uid();
+
+  return next;
+end;
+$$;
+grant execute on function public.submit_pattern_result(int) to authenticated;
+
+-- Color Match: 5-round score, max 5000. Reward is bounded at 75.
+alter table public.profiles
+  add column if not exists color_match_best_score int not null default 0;
+
+create or replace function public.submit_color_match_result(score int)
+returns table (best int, reward int)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+begin
+  if score is null or score < 0 or score > 5000 then
+    raise exception 'score out of plausible range';
+  end if;
+
+  reward := case
+    when score = 0 then 0
+    else least(75, 10 + (score / 100))
+  end;
+
+  select color_match_best_score into current_best
+    from public.profiles where user_id = auth.uid();
+
+  best := greatest(current_best, score);
+
+  update public.profiles
+     set color_match_best_score = best,
+         points                 = points + reward,
+         lifetime_points        = lifetime_points + reward,
+         updated_at             = now()
+   where user_id = auth.uid();
+
+  return next;
+end;
+$$;
+grant execute on function public.submit_color_match_result(int) to authenticated;
+
 -- ===========================================================================
 -- 5. Blackjack: server-escrowed stakes + payout capped to the real wager.
 --    Stakes are deducted the instant a bet is committed (so abandoning a

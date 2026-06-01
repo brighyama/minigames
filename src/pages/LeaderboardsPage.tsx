@@ -7,6 +7,8 @@ import {
   fetchTotalPointsLeaderboard,
   fetchReactionLeaderboard,
   fetchAimLeaderboard,
+  fetchPatternLeaderboard,
+  fetchColorMatchLeaderboard,
   fetch2048Leaderboard,
   fetchTetrisLeaderboard,
   fetchWordleLeaderboard,
@@ -63,7 +65,7 @@ export function LeaderboardsPage() {
       <BackButton />
       <header className="hero hero-compact">
         <h1 className="title title-md">leaderboards</h1>
-        <p className="subtitle">the best of the best</p>
+        {/* <p className="subtitle">the best of the best</p> */}
       </header>
 
       {banner && <div className="leaderboard-banner">{banner}</div>}
@@ -84,6 +86,16 @@ export function LeaderboardsPage() {
           title="Aim Trainer"
           scoreLabel="Best score"
           load={() => fetchAimLeaderboard(100)}
+        />
+        <Leaderboard
+          title="Memory Matrix"
+          scoreLabel="Best level"
+          load={() => fetchPatternLeaderboard(100)}
+        />
+        <Leaderboard
+          title="Color Match"
+          scoreLabel="Best score"
+          load={() => fetchColorMatchLeaderboard(100)}
         />
         <Leaderboard
           title="2048"
