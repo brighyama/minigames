@@ -141,6 +141,9 @@ export function TetrisGame() {
   // The loop populates this with the unified input dispatcher so the on-screen
   // touch controls (and any other UI) can drive the game.
   const actionsRef = useRef<((action: TetrisAction, down: boolean) => void) | null>(null)
+  // Holds the latest `restart` callback so the in-loop input handler can fire it
+  // from any phase (the restart keybind works during play, done, or top-out).
+  const restartRef = useRef<(() => void) | null>(null)
 
   const updateHandling = useCallback((patch: Partial<Handling>) => {
     setHandling((prev) => {
@@ -427,6 +430,12 @@ export function TetrisGame() {
     // buttons). `down` is the press/release edge — only the held actions (move,
     // soft drop) care about release.
     const applyAction = (action: TetrisAction, down: boolean) => {
+      // Restart works in any phase (playing / done / top-out / countdown), so it
+      // bypasses the "must be playing" gate below.
+      if (action === 'restart') {
+        if (down && !settingsOpenRef.current) restartRef.current?.()
+        return
+      }
       if (statusRef.current !== 'playing' || settingsOpenRef.current) return
       const g = gameRef.current
       if (down) {
@@ -735,6 +744,11 @@ export function TetrisGame() {
     setStatus('countdown')
   }, [setStatus])
 
+  // Expose the latest restart callback to the in-loop input handler (restart key).
+  useEffect(() => {
+    restartRef.current = restart
+  }, [restart])
+
   return (
     <main className="tetris-container">
       <BackButton label="Exit" />
@@ -888,6 +902,7 @@ const HELP_LABELS: Record<TetrisAction, string> = {
   rotateCCW: 'rotate ccw',
   rotate180: '180',
   hold: 'hold',
+  restart: 'restart',
 }
 
 // A single on-screen control. Routes press/release through the loop's action

@@ -10,6 +10,7 @@ import {
   fetch2048Leaderboard,
   fetchTetrisLeaderboard,
   fetchWordleLeaderboard,
+  fetchMinesweeperLeaderboard,
   fetchCasinoWinLeaderboard,
   fetchCasinoNetLeaderboard,
 } from '../lib/leaderboards'
@@ -20,6 +21,14 @@ function formatSprint(ms: number): string {
   const m = Math.floor(total / 60)
   const s = total - m * 60
   return m > 0 ? `${m}:${s.toFixed(2).padStart(5, '0')}` : `${s.toFixed(2)}s`
+}
+
+/** Format a clear time in milliseconds as "M:SS" / "SSs". */
+function formatClear(ms: number): string {
+  const total = Math.round(ms / 1000)
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`
 }
 
 export function LeaderboardsPage() {
@@ -91,6 +100,24 @@ export function LeaderboardsPage() {
           title="Daily Word"
           scoreLabel="Best streak"
           load={() => fetchWordleLeaderboard(100)}
+        />
+        <Leaderboard
+          title="Minesweeper · Easy"
+          scoreLabel="Best time"
+          load={() => fetchMinesweeperLeaderboard('easy', 100)}
+          formatScore={formatClear}
+        />
+        <Leaderboard
+          title="Minesweeper · Medium"
+          scoreLabel="Best time"
+          load={() => fetchMinesweeperLeaderboard('medium', 100)}
+          formatScore={formatClear}
+        />
+        <Leaderboard
+          title="Minesweeper · Hard"
+          scoreLabel="Best time"
+          load={() => fetchMinesweeperLeaderboard('hard', 100)}
+          formatScore={formatClear}
         />
         <Leaderboard
           title="Biggest Win"

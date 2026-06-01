@@ -1,0 +1,284 @@
+.mines-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 3rem;
+  gap: 1rem;
+}
+
+.mines-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.mines-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--theme-text, #fff);
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* ---------- Difficulty selector ---------- */
+
+.mines-diffs {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  background: rgba(0, 0, 0, 0.28);
+  clip-path: var(--shape-octagon-sm);
+}
+
+.mines-diff {
+  border: none;
+  border-radius: 0;
+  clip-path: var(--shape-octagon-sm);
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  background: transparent;
+  color: var(--theme-text, #fff);
+  opacity: 0.7;
+  transition: background 120ms ease, opacity 120ms ease;
+}
+
+.mines-diff:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mines-diff.is-active {
+  opacity: 1;
+  background: var(--accent-1, #8b5cf6);
+  color: #fff;
+}
+
+/* ---------- HUD (mine counter / face / timer) ---------- */
+
+.mines-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  width: min(96vw, 520px);
+}
+
+.mines-readout {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 92px;
+  padding: 0.45rem 0.8rem;
+  background: rgba(0, 0, 0, 0.32);
+  clip-path: var(--shape-octagon-sm);
+  color: var(--theme-text, #fff);
+}
+
+.mines-readout-icon {
+  font-size: 1rem;
+  opacity: 0.75;
+}
+
+.mines-readout-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.mines-readout:last-child {
+  justify-content: flex-end;
+}
+
+.mines-face {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 0;
+  clip-path: var(--shape-octagon-sm);
+  font-size: 1.4rem;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--theme-text, #fff);
+  transition: transform 80ms ease, background 120ms ease;
+}
+
+.mines-face:hover { background: rgba(255, 255, 255, 0.28); }
+.mines-face:active { transform: scale(0.94); }
+.mines-face.status-won { background: var(--accent-2, #34e89e); color: #08130f; }
+.mines-face.status-lost { background: #c0392b; color: #fff; }
+
+/* ---------- Board ---------- */
+
+.mines-board-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.mines-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 3px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 0;
+  clip-path: var(--shape-octagon);
+  /* Scale the whole board to the viewport but cap cell size on small grids. */
+  width: min(96vw, calc(var(--cols) * 36px + 16px));
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.mines-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  clip-path: var(--shape-octagon-sm);
+  font-weight: 800;
+  font-size: clamp(0.7rem, calc(72vw / var(--cols)), 1.25rem);
+  line-height: 1;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--theme-text, #fff);
+  transition: background 90ms ease, transform 60ms ease;
+}
+
+.mines-cell:hover:not(.is-revealed) {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.mines-cell:active:not(.is-revealed) {
+  transform: scale(0.92);
+}
+
+.mines-cell.is-revealed {
+  background: rgba(0, 0, 0, 0.28);
+  cursor: default;
+}
+
+.mines-cell.is-flagged {
+  color: #ff6b6b;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.mines-cell.is-mine {
+  background: #c0392b;
+  color: #fff;
+}
+
+/* ---------- Result overlay ---------- */
+
+.mines-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(16, 14, 22, 0.72);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  clip-path: var(--shape-octagon);
+}
+
+.mines-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1.4rem 1.8rem;
+  text-align: center;
+}
+
+.mines-result-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.mines-result-time {
+  font-size: 1rem;
+  opacity: 0.85;
+  color: #fff;
+}
+
+.mines-btn {
+  border: none;
+  border-radius: 0;
+  clip-path: var(--shape-octagon-sm);
+  padding: 0.6rem 1.3rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  transition: transform 80ms ease, filter 120ms ease, background 120ms ease;
+}
+
+.mines-btn:hover { background: rgba(255, 255, 255, 0.26); }
+.mines-btn:active { transform: translateY(1px); }
+.mines-btn-primary { background: var(--accent-1, #8b5cf6); }
+.mines-btn-primary:hover { filter: brightness(1.1); }
+
+.mines-note {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  color: #fff;
+}
+
+/* ---------- Footer controls ---------- */
+
+.mines-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.mines-flagtoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: none;
+  border-radius: 0;
+  clip-path: var(--shape-octagon-sm);
+  padding: 0.5rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--theme-text, #fff);
+  transition: background 120ms ease;
+}
+
+.mines-flagtoggle:hover { background: rgba(255, 255, 255, 0.24); }
+.mines-flagtoggle.is-active {
+  background: var(--accent-2, #34e89e);
+  color: #08130f;
+}
+
+.mines-hint {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  color: var(--theme-text, #fff);
+  text-align: center;
+}

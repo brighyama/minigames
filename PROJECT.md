@@ -1,8 +1,8 @@
 # Minigames — Project Reference
 
 A personal hub of small browser games with shared progression: accounts, points, daily bonuses, a shop, themes, card decks, achievement-style rarities, and leaderboards. Two families of games:
-- **Skill games** — Reaction Test, Aim Trainer, 2048, Tetris, Daily Word, Chess.
-- **Casino games** — Blackjack, Roulette (wager points). Grouped under a "Casino" section on the home page.
+- **Skill games** — Reaction Test, Aim Trainer, 2048, Tetris, Daily Word, Chess, Minesweeper.
+- **Casino games** — Blackjack, Roulette, Cases (wager points). Grouped under a "Casino" section on the home page.
 
 **One unified visual theme spans every game.** The active theme reskins the whole surface — page gradient, accents, card decks, and per-game palettes — and every game uses the same chamfered `clip-path` geometry (never `border-radius`). See "Unified theming across games" below.
 
@@ -84,7 +84,9 @@ src/
     wordle/                   Date-seeded daily 5-letter word game.      → wordle/CONTEXT.md
     blackjack/                6-deck blackjack, escrowed economy.        → blackjack/CONTEXT.md
     roulette/                 European roulette, server-authoritative.   → roulette/CONTEXT.md
+    cases/                    CS-style case opening, server-authoritative.→ cases/CONTEXT.md
     chess/                    Vs a built-in engine. No backend.          → chess/CONTEXT.md
+    minesweeper/              Timed classic minesweeper, 3 difficulties. → minesweeper/CONTEXT.md
 ```
 
 ---
@@ -100,7 +102,9 @@ src/
 | Daily Word | `/games/wordle` | `wordle/` | Best daily solve streak | `submit_wordle_result` |
 | Blackjack | `/games/blackjack` | `blackjack/` | Casino net / biggest win | `blackjack_deal_stake`/`add_stake`/`settle` |
 | Roulette | `/games/roulette` | `roulette/` | Casino net / biggest win | `roulette_spin` (server-authoritative) |
+| Cases | `/games/cases` | `cases/` | Casino net / biggest win | `cases_open` (server-authoritative) |
 | Chess | `/games/chess` | `chess/` | — (no scoring) | none |
+| Minesweeper | `/games/minesweeper` | `minesweeper/` | Fastest clear per difficulty (ms) | `submit_minesweeper_result` |
 
 Each game's `CONTEXT.md` is the source of truth for its mechanics, points formula, theming hooks, and gotchas. The shared backend contract (columns + RPCs) is in the [Database](#database) section below.
 
@@ -187,7 +191,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 ### Leaderboards
 
 - Route `/leaderboards`. Cards rendered in a responsive grid.
-- Eight boards: **Total Points**, **Reaction Time** (lower = better, `X ms`), **Aim Trainer**, **2048** (best tile), **Tetris Sprint** (lower = better, 40-line time), **Daily Word** (best solve streak), **Biggest Win** (single casino round), **Casino Net** (cumulative, signed display).
+- Eleven boards: **Total Points**, **Reaction Time** (lower = better, `X ms`), **Aim Trainer**, **2048** (best tile), **Tetris Sprint** (lower = better, 40-line time), **Daily Word** (best solve streak), **Minesweeper · Easy/Medium/Hard** (lower = better, clear time), **Biggest Win** (single casino round), **Casino Net** (cumulative, signed display).
 - All driven by `SECURITY DEFINER` RPCs that filter `username is not null`. Users without a username never appear — the page shows a gold banner reminding them to set one.
 
 ### Home page categories & top-right cluster
@@ -218,6 +222,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 | `wordle_streak` | `int` | Current consecutive-day solve streak. |
 | `wordle_best_streak` | `int` | Max streak ever. Drives the Daily Word leaderboard. |
 | `wordle_wins` / `wordle_played` | `int` | Total puzzles solved / attempted. |
+| `mines_easy_ms` / `mines_medium_ms` / `mines_hard_ms` | `int` | Best clear time (ms) per Minesweeper difficulty. Null = no record. **Lower is better.** |
 | `casino_net` | `bigint` | Cumulative casino net (can be negative). Drives Casino Net board. |
 | `casino_biggest_win` | `int` | Best single-round net win. Drives Biggest Win board. |
 | `bj_open_stake` | `bigint` | Server-side blackjack escrow: points staked in the current open round. 0 between rounds. |
@@ -239,12 +244,15 @@ Grants below reflect the **post-`hardening.sql`** state (run schema.sql, then ha
 | `submit_2048_result(top_tile int) returns (best, reward)` | authenticated | Updates best tile (`greatest`) + awards `5×(tile/64)`. Validates power of two ≤131072. |
 | `submit_tetris_result(time_ms int, lines int) returns (best, reward)` | authenticated | Requires `lines = 40`; rejects `< 8000ms`. Updates best (`least`) + awards a tiered reward: 40 base, +15 under 2min, +30 under 1min (stacking, max 85). |
 | `submit_wordle_result(puzzle_day int, guesses int, solved bool) returns (streak, best_streak, reward)` | authenticated | Requires `puzzle_day = current UTC day` (no backfill); idempotent per day. Updates streak + awards solve-only `5 + (6−guesses)*5` (max 30). |
+| `submit_minesweeper_result(difficulty text, time_ms int) returns (best, reward)` | authenticated | Validates difficulty + per-difficulty time floor (easy 1s / medium 5s / hard 20s). Updates that difficulty's best (`least`) + awards a fixed reward (easy 10 / medium 25 / hard 50). |
 | `blackjack_deal_stake(amount int)` | authenticated | First stake of a round: deducts points, **resets** the escrow `bj_open_stake`. |
 | `blackjack_add_stake(amount int)` | authenticated | Double/split/insurance: deducts points, adds to the escrow. |
 | `blackjack_settle(payout int) returns int` | authenticated | Pays out (**capped at 2.5× the escrow**), records casino stats, clears the escrow. |
 | `roulette_multiplier(bet_id text, winning int)` | (helper) | Gross return factor for a bet (0/2/3/36). Mirrors `betDef`. |
 | `roulette_spin(bets jsonb)` | authenticated | Server-authoritative: deducts wager, picks number, pays out, records stats. |
+| `cases_open(case_id text, wager int) returns (item_index, mult_x100, payout, net, new_points)` | authenticated | Server-authoritative case open: deducts wager, weighted-draws an item, pays `wager×multiplier`, records casino stats. Item tables mirror `src/games/cases/lib.ts`. |
 | `get_leaderboard_total / _reaction / _aim / _2048 / _tetris / _wordle / _casino_win / _casino_net (lim int)` | anon, authenticated | Public leaderboards, each filtering `username is not null`. |
+| `get_leaderboard_minesweeper(diff text, lim int)` | anon, authenticated | Public per-difficulty Minesweeper board (fastest time asc). `diff` ∈ easy/medium/hard. |
 | `add_points(amount int)`, `record_casino_result(net int)` | **revoked** | Legacy arbitrary-amount mutators. `hardening.sql` revokes EXECUTE. Do not reintroduce grants. |
 
 ### RLS
@@ -298,14 +306,14 @@ After running, sign out + back in to refresh client state (or rely on the existi
 
 1. Create `src/games/<id>/<GameName>.tsx` + `styles.css`, and a **`CONTEXT.md`** documenting the game (gameplay, files, backend, theming, gotchas) — mirror an existing game's CONTEXT.md.
 2. Add a `<Route path="/games/<id>" element={<GameName … />}>` in [src/App.tsx](src/App.tsx).
-3. Add an entry to the `games` array in [src/pages/HomePage.tsx](src/pages/HomePage.tsx) with a `path: '/games/<id>'`.
+3. Add an entry to the `games` array (or `casinoGames`) in [src/pages/HomePage.tsx](src/pages/HomePage.tsx): `{ id, name, tagline, path: '/games/<id>', gradient }`. The home page lists games as compact monogram tiles (a small gradient chip with the name's first letter + a one-line tagline) — no per-game artwork needed.
 4. For per-game high scores: add a column on `profiles`, a write/award RPC, and a `get_leaderboard_<game>` RPC. Use the existing reaction/aim/2048/tetris ones as templates — **the RPC must compute any points reward itself and bound it** (never accept a client-supplied amount), and validate score plausibility. Then add a `fetch<Game>Leaderboard` helper in [src/lib/leaderboards.ts](src/lib/leaderboards.ts) and a `<Leaderboard>` card in [src/pages/LeaderboardsPage.tsx](src/pages/LeaderboardsPage.tsx).
 5. For theme integration, drive game colors from `:root` CSS vars set in the App.tsx theme effect, and use the shared `--shape-*` clip-paths instead of `border-radius`.
 6. Add the game to the [Games index](#games-index) table above.
 
-### Add a real image for a game card
+### Restyle a game's home-page tile
 
-Drop a file at `public/games/<id>.png` (or `.svg`/`.jpg`), then set `image: '/games/<id>.png'` on the game in [src/pages/HomePage.tsx](src/pages/HomePage.tsx). The placeholder gradient stops being used.
+Each game tile is a compact row: a gradient **monogram chip** (the name's first letter on the game's `gradient`) + name + `tagline`. To tweak a game's look, edit its `gradient`/`tagline` in [src/pages/HomePage.tsx](src/pages/HomePage.tsx); tile styling lives in `.game-tile`/`.game-mono` in [App.css](src/App.css). (There is no per-game image system — the dense monogram layout exists precisely so the catalog looks intentional without bespoke art.)
 
 ### Add a new shop section (e.g., avatars)
 
@@ -320,6 +328,7 @@ Game-specific gotchas live in each game's `CONTEXT.md`. These apply site-wide:
 - **No `border-radius`.** All chamfered/octagonal corners come from `clip-path: var(--shape-…)` defined at the top of [App.css](src/App.css). Borders are faked with a colored outer background + a slightly-inset (`::before`) inner layer with the same clip-path.
 - **High scores save the instant they're set**, not on unmount. Fire-and-forget RPCs from cleanup functions get killed by route navigation, so save in the result-phase effect. Only session-wide-dependent point awards stay in unmount.
 - **`saveProfile` writes are explicit.** Avoid `useEffect`s that auto-save on every change — they cause re-save loops with the hydration effect. `selectTheme`/`addUnlock` call `saveProfile` directly only in response to user actions.
+- **`saveProfile` uses UPDATE, not UPSERT.** An upsert compiles to `INSERT … ON CONFLICT DO UPDATE SET …` that includes `user_id` in the SET clause, but `hardening.sql` grants column-level UPDATE only on the cosmetic columns (not `user_id`) — so an upsert fails with *"permission denied for table profiles"*. `saveProfile` updates the existing row (created by the `handle_new_user` trigger) and only falls back to insert if no row matched. Don't switch it back to `.upsert()`.
 - **Leaderboard rows require `username is not null`.** Anonymous profiles never appear; the LeaderboardsPage shows a banner reminding the user.
 - **Don't put points/daily/shop on non-home routes.** App.tsx gates the top-right cluster with `useLocation()`/`isHome`.
 - **The economy is server-guarded (post-hardening) — keep it that way.** No client-callable "add N points" RPC; every reward is computed and bounded server-side. When adding features, **never** grant a function that takes a client-supplied point amount, and never grant column UPDATE on economic columns.

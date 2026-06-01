@@ -24,6 +24,8 @@ import { Game2048 } from './games/g2048/Game2048'
 import { ChessGame } from './games/chess/ChessGame'
 import { applyChessPalette } from './games/chess/palette'
 import { TetrisGame } from './games/tetris/TetrisGame'
+import { MinesweeperGame } from './games/minesweeper/MinesweeperGame'
+import { CasesGame } from './games/cases/CasesGame'
 // Lazy-loaded: its ~12.5k-word guess dictionary (allowed.ts) is split into its
 // own chunk so it only downloads when a player opens Daily Word.
 const WordleGame = lazy(() =>
@@ -394,10 +396,12 @@ function App() {
         <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
         <Route path="/games/2048" element={<Game2048 />} />
         <Route path="/games/tetris" element={<TetrisGame />} />
+        <Route path="/games/minesweeper" element={<MinesweeperGame />} />
         <Route path="/games/wordle" element={<WordleGame />} />
         <Route path="/games/chess" element={<ChessGame />} />
         <Route path="/games/blackjack" element={<BlackjackGame />} />
         <Route path="/games/roulette" element={<RouletteGame />} />
+        <Route path="/games/cases" element={<CasesGame />} />
       </Routes>
       </Suspense>
     </div>

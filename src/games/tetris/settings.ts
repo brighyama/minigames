@@ -17,6 +17,7 @@ export type TetrisAction =
   | 'rotateCCW'
   | 'rotate180'
   | 'hold'
+  | 'restart'
 
 // Each action maps to one or more physical key codes (KeyboardEvent.code).
 // Codes are layout-position based, which is the convention for games.
@@ -33,6 +34,7 @@ export const DEFAULT_KEYMAP: Keymap = {
   rotateCCW: ['KeyZ', 'ControlLeft'],
   rotate180: ['KeyA'],
   hold: ['ShiftLeft', 'KeyC'],
+  restart: ['KeyR'],
 }
 
 // Bounds for the handling sliders (also used to clamp loaded values).
@@ -52,6 +54,7 @@ export const ACTION_ORDER: TetrisAction[] = [
   'rotateCCW',
   'rotate180',
   'hold',
+  'restart',
 ]
 
 export const ACTION_LABELS: Record<TetrisAction, string> = {
@@ -63,6 +66,7 @@ export const ACTION_LABELS: Record<TetrisAction, string> = {
   rotateCCW: 'Rotate CCW',
   rotate180: 'Rotate 180',
   hold: 'Hold',
+  restart: 'Restart',
 }
 
 const HANDLING_KEY = 'minigames:tetris:handling'

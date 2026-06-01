@@ -12,7 +12,7 @@ architecture (theming, economy, leaderboard framework, conventions).
   internally `WIDTH=10 × HEIGHT=40`, `VISIBLE=20`; pieces spawn in the buffer
   and fall into view).
 - **Controls:** ←/→ move, ↓ soft drop, space hard drop, ↑/X rotate CW, Z rotate
-  CCW, A 180, Shift/C hold.
+  CCW, A 180, Shift/C hold, R quick-restart. All are rebindable (Settings).
 
 ## Mechanics ("the feel")
 
@@ -52,7 +52,9 @@ architecture (theming, economy, leaderboard framework, conventions).
 - **Unified input dispatcher.** Keyboard and on-screen touch buttons both funnel
   through `applyAction(action, down)` inside the loop closure, exposed via
   `actionsRef` so the JSX `TouchButton`s can call it. `applyAction` is the single
-  gate: it no-ops unless `status === 'playing'` and settings is closed.
+  gate: it no-ops unless `status === 'playing'` and settings is closed — **except
+  `restart`** (default **R**), which is handled first and fires in any phase via
+  `restartRef` (the latest `restart` callback, synced by effect).
 - **Keybinds are physical `KeyboardEvent.code` values** (layout-position based,
   the game convention). Each action holds up to 2 codes; codes are globally
   unique (`assignKey` strips a code from any other action before binding it to a

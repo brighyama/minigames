@@ -437,6 +437,91 @@ as $$
 $$;
 grant execute on function public.get_leaderboard_casino_net(int) to anon, authenticated;
 
+-- Cases (CS-style case opening). Server-authoritative: the server owns the RNG
+-- and the payout, mirroring roulette_spin. The case item tables here MUST match
+-- src/games/cases/lib.ts exactly — same per-case item order (so item_index maps
+-- to the same tier client-side), same integer weights (summing to 10000), and
+-- same multipliers (stored here as hundredths, e.g. 150 = 1.50x). Opening
+-- deducts the wager, draws a weighted item, and pays out wager*multiplier.
+-- Returns (item_index, mult_x100, payout, net, new_points).
+create or replace function public.cases_open(case_id text, wager int)
+returns table (item_index int, mult_x100 int, payout int, net int, new_points int)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  weights int[];
+  mults   int[];   -- multipliers in hundredths (150 = 1.50x)
+  total   int;
+  r       int;
+  acc     int := 0;
+  idx     int := 0;
+  mult    int;
+  pay     int;
+  net_change int;
+  pts     int;
+begin
+  if wager is null or wager <= 0 then
+    raise exception 'wager must be positive';
+  end if;
+
+  -- Per-case tables (mirror of CASES in src/games/cases/lib.ts).
+  if case_id = 'standard' then
+    weights := array[4050, 3500, 1700, 600, 150];
+    mults   := array[20,   75,   150,  300, 1000];
+  elsif case_id = 'classified' then
+    weights := array[4730, 3300, 1300, 600, 70];
+    mults   := array[10,   60,   180,  500, 2500];
+  elsif case_id = 'covert' then
+    weights := array[6000, 2500, 1050, 400, 50];
+    mults   := array[0,    50,   200,  800, 5000];
+  else
+    raise exception 'unknown case';
+  end if;
+
+  -- Atomically check + deduct the wager.
+  select points into pts from public.profiles where user_id = auth.uid();
+  if pts is null then
+    raise exception 'no profile';
+  end if;
+  if pts < wager then
+    raise exception 'insufficient points';
+  end if;
+
+  -- Weighted draw (server-owned RNG).
+  total := 0;
+  for i in 1 .. array_length(weights, 1) loop
+    total := total + weights[i];
+  end loop;
+  r := floor(random() * total)::int;
+  for i in 1 .. array_length(weights, 1) loop
+    acc := acc + weights[i];
+    if r < acc then
+      idx := i - 1;          -- 0-based index into the item list
+      exit;
+    end if;
+  end loop;
+
+  mult := mults[idx + 1];
+  pay  := (wager::bigint * mult / 100)::int;
+  net_change := pay - wager;
+
+  update public.profiles
+     set points             = points - wager + pay,
+         -- Mirror roulette: only the returned amount counts toward lifetime.
+         lifetime_points    = lifetime_points + pay,
+         casino_net         = casino_net + net_change,
+         casino_biggest_win = greatest(casino_biggest_win, net_change),
+         updated_at         = now()
+   where user_id = auth.uid()
+   returning points into pts;
+
+  return query select idx, mult, pay, net_change, pts;
+end;
+$$;
+grant execute on function public.cases_open(text, int) to authenticated;
+
 -- ===========================================================================
 -- 2048
 -- ===========================================================================
@@ -688,3 +773,113 @@ as $$
   limit lim;
 $$;
 grant execute on function public.get_leaderboard_wordle(int) to anon, authenticated;
+
+-- ===========================================================================
+-- Minesweeper (timed, one best-time per difficulty)
+-- ===========================================================================
+
+-- Best clear time in ms per difficulty preset. NULL = no record. Lower is
+-- better. These columns change only via submit_minesweeper_result (they are
+-- not in hardening.sql's cosmetic column grant).
+--   easy   = 9x9,   10 mines
+--   medium = 16x16, 40 mines
+--   hard   = 30x16, 99 mines
+alter table public.profiles
+  add column if not exists mines_easy_ms   int,
+  add column if not exists mines_medium_ms int,
+  add column if not exists mines_hard_ms   int;
+
+drop function if exists public.submit_minesweeper_result(text, int);
+
+-- Settle a won board. difficulty is one of easy/medium/hard; time_ms is range-
+-- checked against a superhuman floor so a client can't fabricate an impossible
+-- record. Updates the per-difficulty account best (via least) and awards a
+-- bounded, difficulty-tiered reward (easy 10, medium 25, hard 50). The reward
+-- is fixed per difficulty so it can't be inflated. Returns (best, reward).
+create or replace function public.submit_minesweeper_result(difficulty text, time_ms int)
+returns table (best int, reward int)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+  new_best     int;
+  award        int;
+  floor_ms     int;
+begin
+  if difficulty not in ('easy', 'medium', 'hard') then
+    raise exception 'unknown difficulty';
+  end if;
+  -- Per-difficulty superhuman floor + a generous upper bound against garbage.
+  floor_ms := case difficulty
+                when 'easy'   then 1000
+                when 'medium' then 5000
+                else 20000      -- hard
+              end;
+  if time_ms is null or time_ms < floor_ms or time_ms > 3600000 then
+    raise exception 'time_ms out of plausible range';
+  end if;
+
+  award := case difficulty
+             when 'easy'   then 10
+             when 'medium' then 25
+             else 50          -- hard
+           end;
+
+  if difficulty = 'easy' then
+    select mines_easy_ms into current_best from public.profiles where user_id = auth.uid();
+    new_best := least(coalesce(current_best, time_ms), time_ms);
+    update public.profiles
+       set mines_easy_ms   = new_best,
+           points          = points + award,
+           lifetime_points = lifetime_points + award,
+           updated_at      = now()
+     where user_id = auth.uid();
+  elsif difficulty = 'medium' then
+    select mines_medium_ms into current_best from public.profiles where user_id = auth.uid();
+    new_best := least(coalesce(current_best, time_ms), time_ms);
+    update public.profiles
+       set mines_medium_ms = new_best,
+           points          = points + award,
+           lifetime_points = lifetime_points + award,
+           updated_at      = now()
+     where user_id = auth.uid();
+  else
+    select mines_hard_ms into current_best from public.profiles where user_id = auth.uid();
+    new_best := least(coalesce(current_best, time_ms), time_ms);
+    update public.profiles
+       set mines_hard_ms   = new_best,
+           points          = points + award,
+           lifetime_points = lifetime_points + award,
+           updated_at      = now()
+     where user_id = auth.uid();
+  end if;
+
+  return query select new_best, award;
+end;
+$$;
+grant execute on function public.submit_minesweeper_result(text, int) to authenticated;
+
+-- Per-difficulty leaderboard: ranks by fastest clear time (ascending).
+create or replace function public.get_leaderboard_minesweeper(diff text, lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by t.score asc) as int) as rank,
+    t.username,
+    t.score
+  from (
+    select p.username,
+           case diff
+             when 'easy'   then p.mines_easy_ms
+             when 'medium' then p.mines_medium_ms
+             when 'hard'   then p.mines_hard_ms
+           end as score
+    from public.profiles p
+    where p.username is not null
+  ) t
+  where t.score is not null
+  order by t.score asc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_minesweeper(text, int) to anon, authenticated;
