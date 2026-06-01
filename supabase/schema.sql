@@ -515,3 +515,74 @@ as $$
   limit lim;
 $$;
 grant execute on function public.get_leaderboard_2048(int) to anon, authenticated;
+
+-- ===========================================================================
+-- Tetris (Sprint 40L)
+-- ===========================================================================
+
+-- tetris_sprint_ms stores the account's best time (ms) to clear 40 lines.
+-- NULL = no record. Lower is better (drives the Tetris Sprint leaderboard).
+-- Locked down by hardening.sql (not in the cosmetic column grant), so it can
+-- only change via submit_tetris_result below.
+alter table public.profiles
+  add column if not exists tetris_sprint_ms int;
+
+drop function if exists public.submit_tetris_result(int, int);
+
+-- Settle a completed 40-line Sprint. lines must equal 40 (only finished runs
+-- count); the time is range-checked against a superhuman floor so a client
+-- can't fabricate an impossible record. Updates the account best (via least)
+-- and awards a bounded reward derived from the time. Returns (best, reward).
+--   reward = 5 + floor(max(0, 120000 - time_ms) / 3000), capped at 50.
+--   (120s -> 5, 60s -> 25, 30s -> 35, <=15s -> capped 50). Always in [5,50].
+create or replace function public.submit_tetris_result(time_ms int, lines int)
+returns table (best int, reward int)
+language plpgsql security definer set search_path = public
+as $$
+declare
+  current_best int;
+  new_best     int;
+  award        int;
+begin
+  if lines is null or lines <> 40 then
+    raise exception 'a sprint result must clear exactly 40 lines';
+  end if;
+  -- Superhuman floor: the 40L world record is ~14s; reject anything under 8s.
+  -- Upper bound guards against integer-overflow style garbage.
+  if time_ms is null or time_ms < 8000 or time_ms > 3600000 then
+    raise exception 'time_ms out of plausible range';
+  end if;
+
+  award := 5 + (greatest(0, 120000 - time_ms) / 3000);
+  award := least(award, 50);
+
+  select tetris_sprint_ms into current_best
+    from public.profiles where user_id = auth.uid();
+  new_best := least(coalesce(current_best, time_ms), time_ms);
+
+  update public.profiles
+     set tetris_sprint_ms = new_best,
+         points           = points + award,
+         lifetime_points  = lifetime_points + award,
+         updated_at       = now()
+   where user_id = auth.uid();
+
+  return query select new_best, award;
+end;
+$$;
+grant execute on function public.submit_tetris_result(int, int) to authenticated;
+
+create or replace function public.get_leaderboard_tetris(lim int default 100)
+returns table (rank int, username text, score int)
+language sql security definer set search_path = public
+as $$
+  select
+    cast(row_number() over (order by p.tetris_sprint_ms asc) as int) as rank,
+    p.username,
+    p.tetris_sprint_ms as score
+  from public.profiles p
+  where p.username is not null and p.tetris_sprint_ms is not null
+  order by p.tetris_sprint_ms asc
+  limit lim;
+$$;
+grant execute on function public.get_leaderboard_tetris(int) to anon, authenticated;

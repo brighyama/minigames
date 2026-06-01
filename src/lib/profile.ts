@@ -11,6 +11,7 @@ export type Profile = {
   best_reaction_avg: number | null
   aim_high_score: number
   g2048_high_score: number
+  tetris_sprint_ms: number | null
   casino_net: number
   casino_biggest_win: number
   updated_at: string
@@ -24,7 +25,7 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
   if (!supabase) return null
   const { data, error } = await supabase
     .from('profiles')
-    .select('user_id, username, theme_id, unlocks, points, lifetime_points, last_daily_claim, best_reaction_avg, aim_high_score, g2048_high_score, casino_net, casino_biggest_win, updated_at')
+    .select('user_id, username, theme_id, unlocks, points, lifetime_points, last_daily_claim, best_reaction_avg, aim_high_score, g2048_high_score, tetris_sprint_ms, casino_net, casino_biggest_win, updated_at')
     .eq('user_id', userId)
     .maybeSingle()
   if (error) {

@@ -43,6 +43,13 @@ const games: Game[] = [
       'linear-gradient(135deg, #edc22e 0%, #f67c5f 55%, #776e65 100%)',
   },
   {
+    id: 'tetris',
+    name: 'tetris',
+    path: '/games/tetris',
+    placeholderGradient:
+      'linear-gradient(135deg, #22d3d3 0%, #b15bd8 45%, #f59331 100%)',
+  },
+  {
     id: 'chess',
     name: 'chess',
     path: '/games/chess',

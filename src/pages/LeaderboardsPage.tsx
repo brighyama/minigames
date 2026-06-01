@@ -8,9 +8,18 @@ import {
   fetchReactionLeaderboard,
   fetchAimLeaderboard,
   fetch2048Leaderboard,
+  fetchTetrisLeaderboard,
   fetchCasinoWinLeaderboard,
   fetchCasinoNetLeaderboard,
 } from '../lib/leaderboards'
+
+/** Format a Sprint time in milliseconds as "M:SS.cc" / "SS.cc". */
+function formatSprint(ms: number): string {
+  const total = ms / 1000
+  const m = Math.floor(total / 60)
+  const s = total - m * 60
+  return m > 0 ? `${m}:${s.toFixed(2).padStart(5, '0')}` : `${s.toFixed(2)}s`
+}
 
 export function LeaderboardsPage() {
   const { user } = useAuth()
@@ -70,6 +79,12 @@ export function LeaderboardsPage() {
           title="2048"
           scoreLabel="Best tile"
           load={() => fetch2048Leaderboard(100)}
+        />
+        <Leaderboard
+          title="Tetris Sprint"
+          scoreLabel="40L time"
+          load={() => fetchTetrisLeaderboard(100)}
+          formatScore={(s) => formatSprint(s)}
         />
         <Leaderboard
           title="Biggest Win"

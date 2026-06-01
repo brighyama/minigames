@@ -23,6 +23,7 @@ import { RouletteGame } from './games/roulette/RouletteGame'
 import { Game2048 } from './games/g2048/Game2048'
 import { ChessGame } from './games/chess/ChessGame'
 import { applyChessPalette } from './games/chess/palette'
+import { TetrisGame } from './games/tetris/TetrisGame'
 
 const THEME_KEY = 'minigames:theme'
 const DECK_KEY = 'minigames:deck'
@@ -386,6 +387,7 @@ function App() {
         <Route path="/games/reaction" element={<ReactionGame />} />
         <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
         <Route path="/games/2048" element={<Game2048 />} />
+        <Route path="/games/tetris" element={<TetrisGame />} />
         <Route path="/games/chess" element={<ChessGame />} />
         <Route path="/games/blackjack" element={<BlackjackGame />} />
         <Route path="/games/roulette" element={<RouletteGame />} />
