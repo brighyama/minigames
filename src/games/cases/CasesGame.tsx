@@ -41,6 +41,7 @@ const CHIPS = [10, 25, 100, 500, 1_000]
 const DEFAULT_DEMO_BALANCE = 10_000
 const SPIN_MS = 6_000
 const SPIN_EASE = 'cubic-bezier(0.08, 0.82, 0.18, 1)'
+const INITIAL_PREVIEW_REEL = [0, 3, 1, 10, 6, 4, 8, 6, 4, 3, 1]
 
 type SpinResult = {
   index: number
@@ -241,8 +242,8 @@ export function CasesGame({ onUnlock }: Props) {
 
         {reel.length === 0 ? (
           <div className="cases-reel-placeholder">
-            {def.items.map((it, i) => (
-              <ReelTile key={i} item={it} />
+            {INITIAL_PREVIEW_REEL.map((idx, i) => (
+              <ReelTile key={i} item={def.items[idx]} />
             ))}
           </div>
         ) : (

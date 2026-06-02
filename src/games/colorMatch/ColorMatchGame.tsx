@@ -278,7 +278,7 @@ export function ColorMatchGame() {
         {phase === 'ready' && (
           <button type="button" className="color-match-start" onClick={startRun}>
             <span className="color-match-title">color match</span>
-            <span className="color-match-subtitle">memorize the flash, then dial it back in</span>
+            <span className="color-match-subtitle">recreate the color from memory</span>
             <span className="color-match-best">best: {bestCopy}</span>
             <span className="color-match-cta">click to play</span>
           </button>

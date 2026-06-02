@@ -117,7 +117,7 @@ function GameCard({ game }: { game: Game }) {
       </span>
       <span className="game-info">
         <span className="game-name">{game.name}</span>
-        <span className="game-tag">{game.path ? game.tagline : 'coming soon'}</span>
+        {/* <span className="game-tag">{game.path ? game.tagline : 'coming soon'}</span> */}
       </span>
       <span className="game-go" aria-hidden="true">
         {game.path ? '›' : ''}
