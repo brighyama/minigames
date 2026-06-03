@@ -1,0 +1,270 @@
+.mathdle-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1.6rem 1rem 2rem;
+  gap: 1rem;
+  user-select: none;
+}
+
+.mathdle-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+}
+
+.mathdle-title {
+  margin: 0;
+  color: var(--theme-text, #fff);
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.mathdle-sub {
+  color: var(--theme-text, #fff);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  opacity: 0.65;
+  text-transform: uppercase;
+}
+
+.mathdle-stats {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.mathdle-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.4rem 0.9rem;
+  color: var(--theme-text, #fff);
+  background: rgba(0, 0, 0, 0.3);
+  clip-path: var(--shape-octagon-sm);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+
+.mathdle-stat span {
+  font-size: 1.25rem;
+  font-weight: 800;
+  opacity: 1;
+}
+
+.mathdle-board {
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  gap: 6px;
+  width: min(96vw, 560px);
+  padding: 10px;
+  background: var(--board-bg, rgba(0, 0, 0, 0.35));
+  background-size: var(--board-bg-size, auto);
+  box-shadow:
+    0 0 0 1px var(--board-border, rgba(255, 255, 255, 0.12)) inset,
+    var(--board-glow, 0 0 22px -8px var(--accent-1, #8b5cf6));
+  clip-path: var(--shape-octagon);
+}
+
+.mathdle-row {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+
+.mathdle-tile {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: var(--board-cell-empty, rgba(255, 255, 255, 0.04));
+  box-shadow: 0 0 0 2px var(--board-grid, rgba(255, 255, 255, 0.12)) inset;
+  clip-path: var(--shape-octagon-sm);
+  font-family: var(--theme-font, var(--mono));
+  font-size: clamp(1.1rem, 5.2vw, 2rem);
+  font-weight: 850;
+  line-height: 1;
+}
+
+.mathdle-tile.is-filled {
+  background: var(--board-cell, rgba(255, 255, 255, 0.12));
+  box-shadow: 0 0 0 2px var(--board-border, rgba(255, 255, 255, 0.4)) inset;
+  animation: mathdle-pop 120ms ease;
+}
+
+.mathdle-tile.is-correct { background: #2e7d46; box-shadow: none; }
+.mathdle-tile.is-present { background: #7c5bc5; box-shadow: none; }
+.mathdle-tile.is-absent  { background: #34343d; box-shadow: none; }
+.mathdle-tile.is-revealed { animation: mathdle-flip 480ms ease forwards; }
+
+@keyframes mathdle-pop {
+  0% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mathdle-flip {
+  0% { transform: rotateX(0); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+
+.mathdle-board.is-shaking .mathdle-row:has(.mathdle-tile.is-filled):not(:has(.is-revealed)) {
+  animation: mathdle-shake 380ms ease;
+}
+
+@keyframes mathdle-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.mathdle-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(96vw, 520px);
+  margin-top: 0.35rem;
+}
+
+.mathdle-key-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.mathdle-key {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 3rem;
+  border: 0;
+  border-radius: 0;
+  color: var(--theme-text, #fff);
+  background: var(--board-cell, rgba(255, 255, 255, 0.16));
+  clip-path: var(--shape-octagon-sm);
+  cursor: pointer;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  touch-action: manipulation;
+  transition: background 120ms ease, transform 60ms ease;
+}
+
+.mathdle-key.is-wide {
+  flex: 1.65 1 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mathdle-key:hover { background: var(--board-cell-alt, rgba(255, 255, 255, 0.26)); }
+.mathdle-key:active { transform: translateY(1px); }
+.mathdle-key:disabled { cursor: default; opacity: 0.85; }
+.mathdle-key.is-correct { background: #2e7d46; }
+.mathdle-key.is-present { background: #7c5bc5; }
+.mathdle-key.is-absent  { background: #25252c; color: rgba(255, 255, 255, 0.45); }
+
+.mathdle-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(8, 6, 12, 0.62);
+  backdrop-filter: blur(3px);
+}
+
+.mathdle-result {
+  max-width: 90vw;
+  padding: 1.6rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  color: var(--theme-text, #fff);
+  text-align: center;
+  background: rgba(20, 17, 28, 0.96);
+  clip-path: var(--shape-octagon);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 0 30px -8px var(--accent-1, #8b5cf6);
+}
+
+.mathdle-result-title {
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+
+.mathdle-result-answer,
+.mathdle-result-streak {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.mathdle-result-answer strong,
+.mathdle-result-streak strong {
+  color: var(--accent-2, #34e89e);
+  font-family: var(--theme-font, var(--mono));
+  font-size: 1.2rem;
+}
+
+.mathdle-result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.3rem;
+}
+
+.mathdle-btn {
+  border: 0;
+  border-radius: 0;
+  padding: 0.6rem 1.4rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  clip-path: var(--shape-octagon-sm);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: transform 80ms ease, filter 120ms ease;
+}
+
+.mathdle-btn:active { transform: translateY(1px); }
+.mathdle-btn-primary { background: var(--accent-1, #8b5cf6); }
+.mathdle-btn-primary:hover { filter: brightness(1.1); }
+
+.mathdle-next {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+@media (max-width: 500px) {
+  .mathdle-container {
+    padding-inline: 0.55rem;
+  }
+
+  .mathdle-row {
+    gap: 4px;
+  }
+
+  .mathdle-board {
+    gap: 4px;
+    padding: 7px;
+  }
+
+  .mathdle-key {
+    min-height: 2.7rem;
+    font-size: 0.95rem;
+  }
+
+  .mathdle-key.is-wide {
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+  }
+}

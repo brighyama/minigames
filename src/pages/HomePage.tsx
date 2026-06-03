@@ -63,6 +63,20 @@ const games: Game[] = [
     gradient: 'linear-gradient(135deg, #ff4d6d 0%, #ffd166 33%, #06d6a0 66%, #4d96ff 100%)',
   },
   {
+    id: 'type-sprint',
+    name: 'type sprint',
+    tagline: '20-second typing test',
+    path: '/games/type-sprint',
+    gradient: 'linear-gradient(135deg, #f8fafc 0%, #8bd3ff 34%, #1f8a70 68%, #0f172a 100%)',
+  },
+  {
+    id: 'mathdle',
+    name: 'mathdle',
+    tagline: 'daily equation puzzle',
+    path: '/games/mathdle',
+    gradient: 'linear-gradient(135deg, #16a34a 0%, #7c3aed 44%, #111827 100%)',
+  },
+  {
     id: 'chess',
     name: 'chess',
     tagline: 'play the engine',
@@ -93,6 +107,13 @@ const casinoGames: Game[] = [
     tagline: 'spin the wheel',
     path: '/games/roulette',
     gradient: 'radial-gradient(circle at 50% 40%, #b8862b 0%, #7a1f2b 50%, #1c0c10 100%)',
+  },
+  {
+    id: 'ride-the-bus',
+    name: 'ride the bus',
+    tagline: 'four calls, one ride',
+    path: '/games/ride-the-bus',
+    gradient: 'linear-gradient(135deg, #16a34a 0%, #7c3aed 48%, #111827 100%)',
   },
   {
     id: 'cases',

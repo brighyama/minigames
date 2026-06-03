@@ -20,6 +20,7 @@ import { ReactionGame } from './games/reaction/ReactionGame'
 import { AimGame } from './games/aim/AimGame'
 import { BlackjackGame } from './games/blackjack/BlackjackGame'
 import { RouletteGame } from './games/roulette/RouletteGame'
+import { RideBusGame } from './games/rideBus/RideBusGame'
 import { Game2048 } from './games/g2048/Game2048'
 import { ChessGame } from './games/chess/ChessGame'
 import { applyChessPalette } from './games/chess/palette'
@@ -28,6 +29,8 @@ import { MinesweeperGame } from './games/minesweeper/MinesweeperGame'
 import { CasesGame } from './games/cases/CasesGame'
 import { PatternGame } from './games/pattern/PatternGame'
 import { ColorMatchGame } from './games/colorMatch/ColorMatchGame'
+import { TypeSprintGame } from './games/typeSprint/TypeSprintGame'
+import { MathdleGame } from './games/mathdle/MathdleGame'
 // Lazy-loaded: its ~12.5k-word guess dictionary (allowed.ts) is split into its
 // own chunk so it only downloads when a player opens Daily Word.
 const WordleGame = lazy(() =>
@@ -440,11 +443,14 @@ function App() {
         <Route path="/games/tetris" element={<TetrisGame />} />
         <Route path="/games/pattern" element={<PatternGame />} />
         <Route path="/games/color-match" element={<ColorMatchGame />} />
+        <Route path="/games/type-sprint" element={<TypeSprintGame />} />
+        <Route path="/games/mathdle" element={<MathdleGame />} />
         <Route path="/games/minesweeper" element={<MinesweeperGame />} />
         <Route path="/games/wordle" element={<WordleGame />} />
         <Route path="/games/chess" element={<ChessGame />} />
         <Route path="/games/blackjack" element={<BlackjackGame />} />
         <Route path="/games/roulette" element={<RouletteGame />} />
+        <Route path="/games/ride-the-bus" element={<RideBusGame />} />
         <Route path="/games/cases" element={<CasesGame onUnlock={addUnlock} />} />
       </Routes>
       </Suspense>

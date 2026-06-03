@@ -3,6 +3,7 @@ import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import { fetchProfile } from '../../lib/profile'
 import { BackButton } from '../../components/BackButton'
+import { DemoBankrollToggle } from '../../components/DemoBankrollToggle'
 import { Hand, badgeFor } from './Hand'
 import {
   canDouble,
@@ -24,7 +25,7 @@ import './styles.css'
 type Phase = 'betting' | 'player_turn' | 'dealer_reveal' | 'settled'
 
 const CHIPS = [10, 25, 100, 500, 1_000]
-const DEFAULT_DEMO_BALANCE = 10_000
+const DEMO_BANKROLL = 250
 const MIN_BET = 10
 
 export function BlackjackGame() {
@@ -34,7 +35,8 @@ export function BlackjackGame() {
   // a local demo bankroll). Hybrid backend model: this local value drives the
   // UI + affordability instantly, while each stake/payout is mirrored to the
   // server via spend_points / add_points (optimistic — outcome is client-side).
-  const [balance, setBalance] = useState<number>(DEFAULT_DEMO_BALANCE)
+  const [demoMode, setDemoMode] = useState(() => !user)
+  const [balance, setBalance] = useState<number>(DEMO_BANKROLL)
   const [phase, setPhase] = useState<Phase>('betting')
   const [bet, setBet] = useState(MIN_BET)
 
@@ -48,25 +50,35 @@ export function BlackjackGame() {
   const [insuranceBet, setInsuranceBet] = useState(0)
   const [results, setResults] = useState<SettledHand[]>([])
 
-  // Pull real points on mount as the starting demo balance.
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setDemoMode(true)
+      setBalance(DEMO_BANKROLL)
+      return
+    }
+    setDemoMode(false)
+    setBalance(0)
+  }, [user])
+
+  // Pull real points whenever live mode is active.
+  useEffect(() => {
+    if (!user || demoMode) return
     let cancelled = false
     fetchProfile(user.id).then((p) => {
       if (cancelled || !p) return
-      setBalance(Math.max(p.points, MIN_BET))
+      setBalance(Math.max(p.points, 0))
     })
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [user, demoMode])
 
   // ---- Server mirroring (escrowed, server-authoritative settlement) ------
   // Stakes are deducted server-side the instant a bet is committed (so a
   // losing hand can't be abandoned to dodge the loss); the payout is capped to
   // the real accumulated wager on settle. RPC calls are serialized through a
   // promise chain so settle always lands after every stake of the round.
-  const isLive = !!user && !!supabase
+  const isLive = !!user && !!supabase && !demoMode
   const opChain = useRef<Promise<unknown>>(Promise.resolve())
 
   const queueBjRpc = (
@@ -312,6 +324,18 @@ export function BlackjackGame() {
     setActiveIdx(0)
   }
 
+  const toggleDemoBankroll = (enabled: boolean) => {
+    newRound()
+    setBet(MIN_BET)
+    if (enabled || !user) {
+      setDemoMode(true)
+      setBalance(DEMO_BANKROLL)
+    } else {
+      setDemoMode(false)
+      setBalance(0)
+    }
+  }
+
   // ---- Derived UI flags -------------------------------------------------
 
   const showActions =
@@ -336,6 +360,11 @@ export function BlackjackGame() {
       <div className="bj-frame">
         <div className="bj-table">
           <div className="bj-hud">
+            <DemoBankrollToggle
+              enabled={demoMode}
+              disabled={phase === 'player_turn' || phase === 'dealer_reveal'}
+              onChange={toggleDemoBankroll}
+            />
             <div className="bj-hud-item">
               <span className="bj-hud-label">Balance</span>
               <span className="bj-hud-value">{balance.toLocaleString()}</span>
@@ -476,11 +505,11 @@ export function BlackjackGame() {
         </div>
       </div>
 
-      {!user && (
-        <div className="bj-note">
-          Playing with a demo bankroll. Sign in to wager your real points.
-        </div>
-      )}
+      <div className="bj-note">
+        {demoMode
+          ? 'Demo bankroll is local to this blackjack session.'
+          : 'Wagering your real points.'}
+      </div>
     </main>
   )
 }

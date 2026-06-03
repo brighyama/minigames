@@ -33,6 +33,13 @@
   opacity: 0.72;
 }
 
+.cases-bankroll-cluster {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
 .cases-balance {
   display: flex;
   flex-direction: column;
@@ -419,6 +426,14 @@
 }
 
 @media (max-width: 560px) {
+  .cases-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .cases-bankroll-cluster {
+    width: 100%;
+    justify-content: space-between;
+  }
   .cases-wager-row { flex-direction: column; }
   .cases-open-btn { min-width: 0; padding: 0.7rem; }
   .cases-reel-wrap { height: 128px; }

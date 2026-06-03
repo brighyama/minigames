@@ -37,6 +37,7 @@ alter table public.profiles add column if not exists color_match_best_score int 
 -- Casino stats: cumulative net (can be negative) + best single-round win.
 alter table public.profiles add column if not exists casino_net         bigint not null default 0;
 alter table public.profiles add column if not exists casino_biggest_win int    not null default 0;
+alter table public.profiles add column if not exists ride_bus_open_stake bigint not null default 0;
 
 alter table public.profiles enable row level security;
 
@@ -487,6 +488,88 @@ end;
 $$;
 
 grant execute on function public.roulette_spin(jsonb) to authenticated;
+
+-- Ride the Bus. Hybrid model like blackjack: the deal deducts and escrows the
+-- stake, then settlement pays at most the legal max return (20x stake).
+alter table public.profiles
+  add column if not exists ride_bus_open_stake bigint not null default 0;
+
+create or replace function public.ride_bus_deal_stake(amount int)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  pts int;
+begin
+  if amount is null or amount <= 0 then
+    raise exception 'invalid stake';
+  end if;
+
+  select points into pts
+    from public.profiles
+   where user_id = auth.uid()
+   for update;
+
+  if pts is null then
+    raise exception 'profile not found';
+  end if;
+  if pts < amount then
+    raise exception 'insufficient points';
+  end if;
+
+  update public.profiles
+     set points = points - amount,
+         ride_bus_open_stake = amount,
+         updated_at = now()
+   where user_id = auth.uid();
+end;
+$$;
+grant execute on function public.ride_bus_deal_stake(int) to authenticated;
+
+create or replace function public.ride_bus_settle(payout int)
+returns table (new_points int, net int)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  staked bigint;
+  paid int;
+  net_change int;
+  pts int;
+begin
+  if payout is null or payout < 0 then
+    raise exception 'invalid payout';
+  end if;
+
+  select ride_bus_open_stake into staked
+    from public.profiles
+   where user_id = auth.uid()
+   for update;
+
+  if staked is null then
+    raise exception 'profile not found';
+  end if;
+
+  paid := least(payout, cast(staked * 20 as int));
+  net_change := paid - cast(staked as int);
+
+  update public.profiles
+     set points = points + paid,
+         lifetime_points = lifetime_points + paid,
+         casino_net = casino_net + net_change,
+         casino_biggest_win = greatest(casino_biggest_win, net_change),
+         ride_bus_open_stake = 0,
+         updated_at = now()
+   where user_id = auth.uid()
+   returning points into pts;
+
+  return query select pts, net_change;
+end;
+$$;
+grant execute on function public.ride_bus_settle(int) to authenticated;
 
 -- Record a casino round settled on the client (blackjack, hybrid model). Only
 -- updates the cumulative/best stats; the actual points move via add_points /

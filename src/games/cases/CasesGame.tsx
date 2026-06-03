@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { fetchProfile } from '../../lib/profile'
 import { useToast } from '../../lib/toast'
 import { BackButton } from '../../components/BackButton'
+import { DemoBankrollToggle } from '../../components/DemoBankrollToggle'
 import { RarityIcon } from '../../components/RarityIcon'
 import {
   abbrev,
@@ -38,7 +39,7 @@ type ServerOpen = {
 }
 
 const CHIPS = [10, 25, 100, 500, 1_000]
-const DEFAULT_DEMO_BALANCE = 10_000
+const DEMO_BANKROLL = 250
 const SPIN_MS = 6_000
 const SPIN_EASE = 'cubic-bezier(0.08, 0.82, 0.18, 1)'
 const INITIAL_PREVIEW_REEL = [0, 3, 1, 10, 6, 4, 8, 6, 4, 3, 1]
@@ -64,7 +65,8 @@ export function CasesGame({ onUnlock }: Props) {
   const toast = useToast()
 
   const [wager, setWager] = useState(100)
-  const [balance, setBalance] = useState(DEFAULT_DEMO_BALANCE)
+  const [demoMode, setDemoMode] = useState(() => !user)
+  const [balance, setBalance] = useState(DEMO_BANKROLL)
   const [phase, setPhase] = useState<Phase>('idle')
   const [reel, setReel] = useState<number[]>([])
   const [spinId, setSpinId] = useState(0)
@@ -81,7 +83,17 @@ export function CasesGame({ onUnlock }: Props) {
   const spinning = phase === 'spinning'
 
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setDemoMode(true)
+      setBalance(DEMO_BANKROLL)
+      return
+    }
+    setDemoMode(false)
+    setBalance(0)
+  }, [user])
+
+  useEffect(() => {
+    if (!user || demoMode) return
     let cancelled = false
     fetchProfile(user.id).then((p) => {
       if (cancelled || !p) return
@@ -90,7 +102,7 @@ export function CasesGame({ onUnlock }: Props) {
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [user, demoMode])
 
   useEffect(() => {
     if (!spinning) return
@@ -165,7 +177,7 @@ export function CasesGame({ onUnlock }: Props) {
     setBalance((b) => b - wager)
 
     let winnerIndex: number
-    if (user && supabase) {
+    if (user && supabase && !demoMode) {
       const { data, error } = await supabase.rpc('cases_open', {
         case_id: def.id,
         wager,
@@ -220,6 +232,19 @@ export function CasesGame({ onUnlock }: Props) {
     setWager(balance)
   }
 
+  const toggleDemoBankroll = (enabled: boolean) => {
+    if (spinning) return
+    setResult(null)
+    setWager(100)
+    if (enabled || !user) {
+      setDemoMode(true)
+      setBalance(DEMO_BANKROLL)
+    } else {
+      setDemoMode(false)
+      setBalance(0)
+    }
+  }
+
   return (
     <main className="cases-container">
       <BackButton label="Exit" />
@@ -229,9 +254,16 @@ export function CasesGame({ onUnlock }: Props) {
           <h1 className="cases-title">cases</h1>
           <p className="cases-subtitle">{def.tagline}</p>
         </div>
-        <div className="cases-balance" aria-label="Balance">
-          <span className="cases-balance-label">balance</span>
-          <span className="cases-balance-value">{balance.toLocaleString()}</span>
+        <div className="cases-bankroll-cluster">
+          <DemoBankrollToggle
+            enabled={demoMode}
+            disabled={spinning}
+            onChange={toggleDemoBankroll}
+          />
+          <div className="cases-balance" aria-label="Balance">
+            <span className="cases-balance-label">balance</span>
+            <span className="cases-balance-value">{balance.toLocaleString()}</span>
+          </div>
         </div>
       </header>
 
@@ -357,7 +389,9 @@ export function CasesGame({ onUnlock }: Props) {
       </div>
 
       <div className="cases-note">
-        {user ? '' : 'Playing with a demo bankroll. Sign in to wager your real points.'}
+        {demoMode
+          ? 'Demo bankroll is local to this cases session.'
+          : 'Wagering your real points.'}
       </div>
     </main>
   )

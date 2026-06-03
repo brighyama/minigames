@@ -110,6 +110,62 @@
   background: rgba(255, 255, 255, 0.55);
 }
 
+/* ---------- Casino demo bankroll toggle ---------- */
+
+.demo-bankroll-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 0;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.34);
+  clip-path: var(--shape-octagon-sm);
+  cursor: pointer;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  pointer-events: auto;
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  transition:
+    background 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.demo-bankroll-toggle:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.demo-bankroll-toggle.is-on {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-1, #34e89e) 32%, transparent), color-mix(in srgb, var(--accent-2, #0f3443) 28%, transparent)),
+    rgba(0, 0, 0, 0.34);
+}
+
+.demo-bankroll-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.demo-bankroll-toggle span {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.demo-bankroll-toggle strong {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffffff;
+}
+
 /* ---------- Sidebar ---------- */
 
 .sidebar-backdrop {

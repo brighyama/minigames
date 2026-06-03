@@ -1,8 +1,8 @@
 # Minigames — Project Reference
 
 A personal hub of small browser games with shared progression: accounts, points, daily bonuses, a shop, themes, card decks, achievement-style rarities, and leaderboards. Two families of games:
-- **Skill games** — Reaction Test, Aim Trainer, Memory Matrix, Color Match, 2048, Tetris, Daily Word, Chess, Minesweeper.
-- **Casino games** — Blackjack, Roulette, Cases (wager points). Grouped under a "Casino" section on the home page.
+- **Skill games** — Reaction Test, Aim Trainer, Memory Matrix, Color Match, Type Sprint, Mathdle, 2048, Tetris, Daily Word, Chess, Minesweeper.
+- **Casino games** — Blackjack, Roulette, Ride the Bus, Cases (wager points). Grouped under a "Casino" section on the home page.
 
 **One unified visual theme spans every game.** The active theme reskins the whole surface — page gradient, accents, card decks, and per-game palettes — and every game uses the same chamfered `clip-path` geometry (never `border-radius`). See "Unified theming across games" below.
 
@@ -69,6 +69,7 @@ src/
     Leaderboard.tsx           Generic leaderboard card (loading/error/empty/data states, podium 1-3).
     RarityIcon.tsx            1/2/3/4 star SVGs for green/blue/purple/red, crown for gold.
     BackButton.tsx            Universal fixed top-center exit/back button. Used on every non-home page.
+    DemoBankrollToggle.tsx    Shared casino toggle/reset for the 250-point local demo bankroll.
 
   pages/
     HomePage.tsx              Hero + grids of game cards (skill games, then a Casino section).
@@ -81,11 +82,14 @@ src/
     aim/                      20s click-the-target trainer.              → aim/CONTEXT.md
     pattern/                  HumanBenchmark-style visual memory game.   → pattern/CONTEXT.md
     colorMatch/               Dialed-inspired color memory game.          → colorMatch/CONTEXT.md
+    typeSprint/               20-second Monkeytype-style typing test.     → typeSprint/CONTEXT.md
+    mathdle/                  Daily 8-slot arithmetic equation puzzle.    → mathdle/CONTEXT.md
     g2048/                    Classic 2048 + swappable AI solver.        → g2048/CONTEXT.md
     tetris/                   TETR.IO-style Sprint 40L (canvas).         → tetris/CONTEXT.md
     wordle/                   Date-seeded daily 5-letter word game.      → wordle/CONTEXT.md
     blackjack/                6-deck blackjack, escrowed economy.        → blackjack/CONTEXT.md
     roulette/                 European roulette, server-authoritative.   → roulette/CONTEXT.md
+    rideBus/                  Schedule 1-style Ride the Bus.             → rideBus/CONTEXT.md
     cases/                    CS-style case opening, server-authoritative.→ cases/CONTEXT.md
     chess/                    Vs a built-in engine. No backend.          → chess/CONTEXT.md
     minesweeper/              Timed classic minesweeper, 3 difficulties. → minesweeper/CONTEXT.md
@@ -101,11 +105,14 @@ src/
 | Aim Trainer | `/games/aim` | `aim/` | Most targets in 20s | `award_aim`, `update_aim_high_score` |
 | Memory Matrix | `/games/pattern` | `pattern/` | Highest completed level | `submit_pattern_result` |
 | Color Match | `/games/color-match` | `colorMatch/` | Best 5-round score | `submit_color_match_result` |
+| Type Sprint | `/games/type-sprint` | `typeSprint/` | 20-second WPM / accuracy | none (local best only) |
+| Mathdle | `/games/mathdle` | `mathdle/` | Daily solve streak / local stats | none (local daily only) |
 | 2048 | `/games/2048` | `g2048/` | Highest tile reached | `submit_2048_result` |
 | Tetris | `/games/tetris` | `tetris/` | Fastest 40-line sprint (ms) | `submit_tetris_result` |
 | Daily Word | `/games/wordle` | `wordle/` | Best daily solve streak | `submit_wordle_result` |
 | Blackjack | `/games/blackjack` | `blackjack/` | Casino net / biggest win | `blackjack_deal_stake`/`add_stake`/`settle` |
 | Roulette | `/games/roulette` | `roulette/` | Casino net / biggest win | `roulette_spin` (server-authoritative) |
+| Ride the Bus | `/games/ride-the-bus` | `rideBus/` | Casino net / biggest win | `ride_bus_deal_stake`/`settle` |
 | Cases | `/games/cases` | `cases/` | Casino net / biggest win | `cases_open` (server-authoritative) |
 | Chess | `/games/chess` | `chess/` | — (no scoring) | none |
 | Minesweeper | `/games/minesweeper` | `minesweeper/` | Fastest clear per difficulty (ms) | `submit_minesweeper_result` |
@@ -146,7 +153,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 - **Geometry.** No game uses `border-radius`. All panels, tiles, buttons, and overlays use the shared `clip-path` chamfer shapes (`--shape-octagon`, `--shape-octagon-sm`, `--shape-diagonal`) defined at the top of [App.css](src/App.css).
 - **Per-game color hooks** set by the theme effect:
   - `--accent-1/2` — reaction backgrounds, aim/tetris accents, particles (general-purpose).
-  - `--board-*` — shared board surfaces for grid/board games and framed skill games. Wordle, Memory Matrix, Color Match, 2048, Tetris, Chess, and Minesweeper consume these for shells, cell backgrounds, grid lines, and glows; future board games should prefer these variables before adding bespoke skin hooks.
+  - `--board-*` — shared board surfaces for grid/board games and framed skill games. Wordle, Mathdle, Memory Matrix, Color Match, Type Sprint, 2048, Tetris, Chess, and Minesweeper consume these for shells, cell backgrounds, grid lines, and glows; future board games should prefer these variables before adding bespoke skin hooks.
   - `--aim-circle-a/b` — aim-trainer target gradient (`aim/palette` behavior).
   - `--g2048-bg-*/--g2048-fg-*` — 2048 tile palette (`applyTilePalette`).
   - `--chess-light/dark/hint/capture` — chess board (`applyChessPalette`).
@@ -177,6 +184,14 @@ The goal is that **every game looks like part of the same site** under whatever 
 - All point gains go through **purpose-specific server RPCs that compute the amount themselves** (`award_reaction`, `award_aim`, `submit_pattern_result`, `submit_color_match_result`, `submit_2048_result`, `submit_tetris_result`, `claim_daily_points`, `roulette_spin`, `blackjack_settle`). There is **no generic "add N points" endpoint** callable by clients — see "Security model". `spend_points` (shop) is the only remaining client-callable mutation, and it can only *decrease* points.
 - Displayed in the top-right cluster (home page only).
 - `window.dispatchEvent(new CustomEvent('points-changed'))` is the convention for triggering a fresh profile fetch in App.tsx. Any code that mutates points fires this.
+
+### Casino demo bankroll
+
+- Blackjack, Roulette, Ride the Bus, and Cases each include a shared **demo bankroll** toggle (`components/DemoBankrollToggle.tsx`).
+- Demo mode is local to the mounted game component/session only: no localStorage, no profile writes, no leaderboard stats, no `points-changed` event, and no real cosmetic unlocks.
+- Signed-out users always start in demo mode with **250** points. The toggle remains usable as a reset button and restores that game's local demo balance to 250.
+- Signed-in users start in live mode with `profiles.points`; toggling demo on resets that game's local balance to **250** and bypasses all casino RPCs. Toggling demo off returns to live mode and rehydrates the real balance from profile.
+- Demo toggles are disabled during active casino actions that would desync state (e.g. an in-progress blackjack hand, roulette spin, or case spin).
 
 ### Daily bonus
 
@@ -234,6 +249,7 @@ The goal is that **every game looks like part of the same site** under whatever 
 | `casino_net` | `bigint` | Cumulative casino net (can be negative). Drives Casino Net board. |
 | `casino_biggest_win` | `int` | Best single-round net win. Drives Biggest Win board. |
 | `bj_open_stake` | `bigint` | Server-side blackjack escrow: points staked in the current open round. 0 between rounds. |
+| `ride_bus_open_stake` | `bigint` | Server-side Ride the Bus escrow: points staked in the current open round. 0 between rounds. |
 | `updated_at` | `timestamptz` | Touched on every write. |
 
 ### RPC functions (all `SECURITY DEFINER`)
@@ -258,6 +274,8 @@ Grants below reflect the **post-`hardening.sql`** state (run schema.sql, then ha
 | `blackjack_deal_stake(amount int)` | authenticated | First stake of a round: deducts points, **resets** the escrow `bj_open_stake`. |
 | `blackjack_add_stake(amount int)` | authenticated | Double/split/insurance: deducts points, adds to the escrow. |
 | `blackjack_settle(payout int) returns int` | authenticated | Pays out (**capped at 2.5× the escrow**), records casino stats, clears the escrow. |
+| `ride_bus_deal_stake(amount int)` | authenticated | Deducts the Ride the Bus stake and stores it in `ride_bus_open_stake`. |
+| `ride_bus_settle(payout int) returns (new_points, net)` | authenticated | Pays out (**capped at 20× the escrow**), records casino stats, clears the escrow. |
 | `roulette_multiplier(bet_id text, winning int)` | (helper) | Gross return factor for a bet (0/2/3/36). Mirrors `betDef`. |
 | `roulette_spin(bets jsonb)` | authenticated | Server-authoritative: deducts wager, picks number, pays out, records stats. |
 | `cases_open(case_id text, wager int) returns (item_index, mult_x100, payout, net, new_points, reward_kind, unlock_id, unlock_name, duplicate)` | authenticated | Server-authoritative case open: deducts wager, weighted-draws an item, pays chip rewards or duplicate cosmetic refunds, unlocks first-time cosmetics, records casino stats. Item tables mirror `src/games/cases/lib.ts`. |
@@ -277,9 +295,10 @@ Run `schema.sql` then **`hardening.sql`**. The model: **no client can inject poi
 1. **Column-level write lockdown.** Supabase grants the `authenticated` role full column UPDATE/INSERT on public tables by default (RLS only gates *rows*, not *columns*). Hardening **revokes** that and re-grants writes to only the cosmetic columns (`username`, `theme_id`, `unlocks`, `updated_at`). Economic columns (`points`, `lifetime_points`, all scores, `casino_*`) change **only** via the RPCs. A signed-in user running `supabase.from('profiles').update({points: 1e9})` is rejected.
 2. **No generic point injection.** `add_points` / `record_casino_result` had their EXECUTE revoked. Rewards come only from purpose-specific RPCs that derive the amount themselves and bound it.
 3. **Plausibility guards.** Reaction `< 100ms`, aim `> 200`, non-power-of-two 2048 tiles, and Tetris sprints `< 8000ms` / `lines ≠ 40` are rejected.
-4. **Server-authoritative / escrowed economy.** Roulette owns its RNG. Blackjack escrows stakes server-side and caps the settle payout at 2.5× the wager.
+4. **Server-authoritative / escrowed economy.** Roulette owns its RNG. Blackjack and Ride the Bus escrow stakes server-side and cap settle payouts to their legal max returns.
+5. **Demo casino bankrolls are client-local only.** Demo mode intentionally bypasses RPCs and cannot mutate points, casino stats, lifetime points, or cosmetic unlocks. Keep the live/demo branches separate when changing casino games.
 
-**Documented residuals** (acceptable for a portfolio arcade; noted at the bottom of `hardening.sql`): `unlocks` stays client-writable (free *cosmetics* only); and a scripted user could grind blackjack always claiming the 2.5× cap. Fully closing the latter means dealing cards server-side like roulette.
+**Documented residuals** (acceptable for a portfolio arcade; noted at the bottom of `hardening.sql`): `unlocks` stays client-writable (free *cosmetics* only); and a scripted user could grind client-dealt casino games (blackjack / Ride the Bus) always claiming their capped payout. Fully closing that means dealing cards server-side like roulette.
 
 ### Migrating an existing project
 
@@ -343,5 +362,6 @@ Game-specific gotchas live in each game's `CONTEXT.md`. These apply site-wide:
 - **Leaderboard rows require `username is not null`.** Anonymous profiles never appear; the LeaderboardsPage shows a banner reminding the user.
 - **Don't put points/daily/shop on non-home routes.** App.tsx gates the top-right cluster with `useLocation()`/`isHome`.
 - **The economy is server-guarded (post-hardening) — keep it that way.** No client-callable "add N points" RPC; every reward is computed and bounded server-side. When adding features, **never** grant a function that takes a client-supplied point amount, and never grant column UPDATE on economic columns.
+- **Casino demo bankroll is session-only.** Keep demo casino state local to the game component. Do not persist it, dispatch `points-changed`, call casino RPCs, or unlock cosmetics while demo mode is active.
 - **Exit/back is universal.** All non-home pages use [components/BackButton.tsx](src/components/BackButton.tsx) (fixed top-center). Don't reintroduce per-game corner exit buttons.
 - **StrictMode-safety.** Several games run effects that fire RPCs; guard them against StrictMode's double-invoke (one-submit refs, round-id guards). See the relevant game's CONTEXT.md.

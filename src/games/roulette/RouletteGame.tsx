@@ -3,6 +3,7 @@ import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import { fetchProfile } from '../../lib/profile'
 import { BackButton } from '../../components/BackButton'
+import { DemoBankrollToggle } from '../../components/DemoBankrollToggle'
 import { RouletteWheel, type RouletteWheelHandle } from './RouletteWheel'
 import { RouletteTable } from './RouletteTable'
 import {
@@ -27,7 +28,7 @@ type ServerSpin = {
 }
 
 const CHIPS = [10, 25, 100, 500, 1_000]
-const DEFAULT_DEMO_BALANCE = 10_000
+const DEMO_BANKROLL = 250
 
 const BETTING_MS = 12_000
 const SPIN_MS = 6_500
@@ -37,7 +38,8 @@ const RECENT_MAX = 10
 export function RouletteGame() {
   const { user } = useAuth()
 
-  const [balance, setBalance] = useState(DEFAULT_DEMO_BALANCE)
+  const [demoMode, setDemoMode] = useState(() => !user)
+  const [balance, setBalance] = useState(DEMO_BANKROLL)
   const [phase, setPhase] = useState<Phase>('betting')
   const [timeLeft, setTimeLeft] = useState(Math.ceil(BETTING_MS / 1000))
   const [selectedChip, setSelectedChip] = useState(100)
@@ -60,9 +62,19 @@ export function RouletteGame() {
 
   const open = phase === 'betting'
 
-  // Hydrate starting balance from the user's real points (preview only).
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      setDemoMode(true)
+      setBalance(DEMO_BANKROLL)
+      return
+    }
+    setDemoMode(false)
+    setBalance(0)
+  }, [user])
+
+  // Hydrate balance from the user's real points whenever live mode is active.
+  useEffect(() => {
+    if (!user || demoMode) return
     let cancelled = false
     fetchProfile(user.id).then((p) => {
       if (cancelled || !p) return
@@ -71,7 +83,7 @@ export function RouletteGame() {
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [user, demoMode])
 
   // The self-driving round loop. One effect per phase; cleanup clears timers so
   // it's safe under StrictMode's double-invoke. Settlement is guarded by a
@@ -109,7 +121,7 @@ export function RouletteGame() {
       }
 
       const placed = Object.keys(betsRef.current).length > 0
-      if (user && supabase && placed) {
+      if (user && supabase && !demoMode && placed) {
         // Server owns the outcome + payout when real points are at stake.
         void supabase
           .rpc('roulette_spin', { bets: betsRef.current })
@@ -204,6 +216,22 @@ export function RouletteGame() {
     setHistory([])
   }
 
+  const toggleDemoBankroll = (enabled: boolean) => {
+    if (!open) return
+    setBets({})
+    setHistory([])
+    setResult(null)
+    setWinning(null)
+    setSelectedChip(100)
+    if (enabled || !user) {
+      setDemoMode(true)
+      setBalance(DEMO_BANKROLL)
+    } else {
+      setDemoMode(false)
+      setBalance(0)
+    }
+  }
+
   const totalWagered = useMemo(
     () => Object.values(bets).reduce((s, a) => s + a, 0),
     [bets],
@@ -272,6 +300,11 @@ export function RouletteGame() {
         {/* Right: HUD, board, chips */}
         <div className="rl-right">
           <div className="rl-hud">
+            <DemoBankrollToggle
+              enabled={demoMode}
+              disabled={!open}
+              onChange={toggleDemoBankroll}
+            />
             <div className="rl-hud-item">
               <span className="rl-hud-label">Balance</span>
               <span className="rl-hud-value">{balance.toLocaleString()}</span>
@@ -330,9 +363,9 @@ export function RouletteGame() {
       </div>
 
       <div className="rl-note">
-        {user
-          ? ''
-          : 'Playing with a demo bankroll. Sign in to wager your real points.'}
+        {demoMode
+          ? 'Demo bankroll is local to this roulette session.'
+          : 'Wagering your real points.'}
       </div>
     </main>
   )
