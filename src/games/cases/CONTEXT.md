@@ -41,7 +41,7 @@ system. See [PROJECT.md](../../../PROJECT.md) for site-wide architecture
 | --- | --- |
 | `lib.ts` | Rarity colors/labels, the single `CASE` reward table, `pickItemIndex`, `buildReel`, formatters. **Mirrored in SQL - see below.** |
 | `CasesGame.tsx` | Chip wager builder, balance HUD, reel animation, server open, result reveal, cosmetic unlock callback. |
-| `styles.css` | Reel/tiles (rarity glow), center pointer, edge fades, chips, odds table. |
+| `styles.css` / `../casino.css` | Reel/tiles (rarity glow), center pointer, edge fades, shared casino chips, odds table. |
 
 ## Backend - server-authoritative
 

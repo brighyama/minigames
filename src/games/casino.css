@@ -1,0 +1,195 @@
+/* Shared casino surfaces: cards and wager chips. */
+
+.casino-card {
+  position: relative;
+  width: 80px;
+  height: 112px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 7px 9px;
+  color: var(--card-black, #1a1a1a);
+  background: var(--card-face, #ffffff);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px var(--card-border, rgba(0, 0, 0, 0.1));
+  clip-path: var(--shape-octagon-sm);
+  font-family: var(--font-card);
+  animation: casino-card-in 0.28s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+  user-select: none;
+}
+
+.casino-card.is-red { color: var(--card-red, #c5283d); }
+.casino-card.is-black { color: var(--card-black, #1a1a1a); }
+
+.casino-card.is-back {
+  background: var(--card-back, repeating-linear-gradient(45deg, #2d3a8c 0, #2d3a8c 6px, #1a2466 6px, #1a2466 12px));
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.casino-card-corner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.casino-card-corner.is-bottom {
+  align-self: flex-end;
+  transform: rotate(180deg);
+}
+
+.casino-card-rank {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.casino-card-suit {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.casino-card-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  pointer-events: none;
+}
+
+@keyframes casino-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) rotate(-8deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+
+.casino-chip,
+.bj-chip.casino-chip,
+.rl-chip.casino-chip,
+.rtb-chip.casino-chip,
+.cases-chip.casino-chip,
+.rl-cell-chip.casino-chip {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  display: inline-flex;
+  flex: 0 0 56px;
+  align-items: center;
+  justify-content: center;
+  border: 4px dashed rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  color: #ffffff;
+  clip-path: none;
+  cursor: pointer;
+  font-family: var(--font-number);
+  font-size: 14px;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 8px rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+  text-transform: none;
+  transition: transform 0.12s ease, box-shadow 0.18s ease, opacity 0.18s, border-color 0.15s;
+}
+
+.casino-chip:hover:not(:disabled),
+.bj-chip.casino-chip:hover:not(:disabled),
+.rl-chip.casino-chip:hover:not(:disabled),
+.rtb-chip.casino-chip:hover:not(:disabled),
+.cases-chip.casino-chip:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 8px rgba(255, 255, 255, 0.13),
+    0 8px 18px rgba(0, 0, 0, 0.5);
+}
+
+.casino-chip:disabled,
+.bj-chip.casino-chip:disabled,
+.rl-chip.casino-chip:disabled,
+.rtb-chip.casino-chip:disabled,
+.cases-chip.casino-chip:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Chip colors mirror rarity order: green -> blue -> purple -> red -> gold. */
+.casino-chip.chip-10,
+.bj-chip.casino-chip.chip-10,
+.rl-chip.casino-chip.chip-10,
+.rtb-chip.casino-chip.chip-10,
+.cases-chip.casino-chip.chip-10 { background: radial-gradient(circle at 35% 35%, #6ee79d, #166534); }
+.casino-chip.chip-25,
+.bj-chip.casino-chip.chip-25,
+.rl-chip.casino-chip.chip-25,
+.rtb-chip.casino-chip.chip-25,
+.cases-chip.casino-chip.chip-25 { background: radial-gradient(circle at 35% 35%, #60a5fa, #1e3a8a); }
+.casino-chip.chip-100,
+.bj-chip.casino-chip.chip-100,
+.rl-chip.casino-chip.chip-100,
+.rtb-chip.casino-chip.chip-100,
+.cases-chip.casino-chip.chip-100,
+.rl-cell-chip.casino-chip.chip-100 { background: radial-gradient(circle at 35% 35%, #c084fc, #581c87); }
+.casino-chip.chip-500,
+.bj-chip.casino-chip.chip-500,
+.rl-chip.casino-chip.chip-500,
+.rtb-chip.casino-chip.chip-500,
+.cases-chip.casino-chip.chip-500 { background: radial-gradient(circle at 35% 35%, #f87171, #7f1d1d); }
+.casino-chip.chip-1000,
+.bj-chip.casino-chip.chip-1000,
+.rl-chip.casino-chip.chip-1000,
+.rtb-chip.casino-chip.chip-1000,
+.cases-chip.casino-chip.chip-1000 {
+  background: radial-gradient(circle at 35% 35%, #fde68a, #b45309);
+  border-color: rgba(255, 215, 100, 0.85);
+  color: #fff8dc;
+}
+
+.casino-chip-mini,
+.rl-cell-chip.casino-chip.casino-chip-mini {
+  width: auto;
+  min-width: 26px;
+  height: 22px;
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border-width: 2px;
+  font-size: 10px;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.32),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .bj-card.casino-card {
+    width: 64px;
+    height: 90px;
+  }
+
+  .bj-card.casino-card .casino-card-rank {
+    font-size: 15px;
+  }
+
+  .bj-card.casino-card .casino-card-center {
+    font-size: 30px;
+  }
+
+  .rtb-card.casino-card {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 5 / 7;
+    padding: 6px 8px;
+  }
+}

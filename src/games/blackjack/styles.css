@@ -72,7 +72,7 @@
   backdrop-filter: blur(10px) saturate(140%);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   clip-path: var(--shape-octagon-sm);
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   color: #ffffff;
 }
@@ -114,7 +114,7 @@
 }
 
 .bj-heading {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: clamp(36px, 6vw, 64px);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -167,7 +167,7 @@
   padding: 2px 8px;
   background: rgba(255, 215, 100, 0.18);
   color: #ffd76b;
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 700;
@@ -194,7 +194,7 @@
   margin-top: 6px;
   padding: 4px 12px;
   background: rgba(0, 0, 0, 0.5);
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: 14px;
   font-weight: 700;
@@ -217,7 +217,7 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 7px 9px;
-  font-family: var(--card-font, Georgia, 'Times New Roman', serif);
+  font-family: var(--font-card);
   animation: bj-card-in 0.28s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
   user-select: none;
 }
@@ -312,7 +312,7 @@
 }
 
 .bj-result-amount {
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: clamp(40px, 6vw, 64px);
   font-weight: 700;
@@ -399,7 +399,7 @@
 
 .bj-btn {
   padding: 11px 22px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.16em;
@@ -459,7 +459,7 @@
   height: 56px;
   border-radius: 50%;
   border: 4px dashed rgba(255, 255, 255, 0.6);
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: 14px;
   font-weight: 800;
   color: #ffffff;
@@ -524,7 +524,7 @@
 }
 
 .bj-bet-value {
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: 22px;
   font-weight: 700;

@@ -50,7 +50,7 @@ export function RouletteTable({
       >
         <span className="rl-cell-label">{label}</span>
         {amount > 0 && (
-          <span className="rl-cell-chip" aria-label={`${amount} on ${label}`}>
+          <span className="rl-cell-chip casino-chip casino-chip-mini chip-100" aria-label={`${amount} on ${label}`}>
             {abbrev(amount)}
           </span>
         )}
@@ -75,7 +75,7 @@ export function RouletteTable({
         title="Straight up: 0"
       >
         <span className="rl-cell-label">0</span>
-        {amount > 0 && <span className="rl-cell-chip">{abbrev(amount)}</span>}
+        {amount > 0 && <span className="rl-cell-chip casino-chip casino-chip-mini chip-100">{abbrev(amount)}</span>}
       </button>,
     )
   }
@@ -103,7 +103,7 @@ export function RouletteTable({
           title={`Straight up: ${n}`}
         >
           <span className="rl-cell-label">{n}</span>
-          {amount > 0 && <span className="rl-cell-chip">{abbrev(amount)}</span>}
+          {amount > 0 && <span className="rl-cell-chip casino-chip casino-chip-mini chip-100">{abbrev(amount)}</span>}
         </button>,
       )
     }

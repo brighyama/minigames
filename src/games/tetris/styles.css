@@ -264,7 +264,7 @@
   background: rgba(255, 255, 255, 0.12);
   padding: 0.05rem 0.35rem;
   clip-path: var(--shape-octagon-sm);
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 0.72rem;
 }
 

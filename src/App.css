@@ -453,7 +453,7 @@
 }
 
 .auth-empty code {
-  font-family: var(--mono);
+  font-family: var(--font-mono);
   font-size: 11px;
   background: rgba(255, 255, 255, 0.08);
   padding: 1px 5px;
@@ -645,7 +645,7 @@
 }
 
 .title {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: clamp(64px, 12vw, 144px);
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -668,7 +668,7 @@
 }
 
 .home-section-title {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: clamp(20px, 2.4vw, 28px);
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -717,7 +717,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 800;
   color: #fff;
@@ -735,7 +735,7 @@
 }
 
 .game-name {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -894,7 +894,7 @@
 }
 
 .points-badge-value {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -1058,7 +1058,7 @@
 }
 
 .leaderboard-title {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1156,7 +1156,7 @@
 }
 
 .shop-section-title {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1229,7 +1229,7 @@
 }
 
 .shop-card-name {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.02em;

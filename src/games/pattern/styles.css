@@ -66,7 +66,7 @@
 
 .pattern-hud-item strong {
   color: #ffffff;
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
 }
 
@@ -99,7 +99,7 @@
 }
 
 .pattern-title {
-  font-family: var(--theme-font, inherit);
+  font-family: var(--font-display);
   font-size: clamp(42px, 7vw, 80px);
   font-weight: 800;
   line-height: 0.95;
@@ -113,7 +113,7 @@
 }
 
 .pattern-score {
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-size: clamp(40px, 7vw, 76px);
   font-weight: 800;
   line-height: 1;

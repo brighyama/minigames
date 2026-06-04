@@ -17,8 +17,8 @@ leaderboard framework, conventions).
 | --- | --- |
 | `BlackjackGame.tsx` | Full table + action buttons + backend wiring. |
 | `lib.ts` | Pure deck/hand logic: shoe, totals, dealer S17, settle (3:2 BJ). |
-| `Card.tsx` / `Hand.tsx` | Card render (reads `--card-*` deck vars) + hand with total badge. |
-| `styles.css` | Table styles. |
+| `Card.tsx` / `Hand.tsx` | Card wrapper around shared `components/CasinoCard.tsx` (reads `--card-*` deck vars) + hand with total badge. |
+| `styles.css` / `../casino.css` | Table styles + shared casino card/chip surfaces. |
 
 ## Backend — escrowed settlement
 
@@ -43,6 +43,8 @@ The outcome is still computed client-side, but the **economy is server-guarded**
 
 - Cards read the active card deck's `--card-face/red/black/back/border/font`
   CSS vars (see card decks in PROJECT.md), so a deck change reskins cards live.
+- Wager chips use the shared `.casino-chip` classes from `src/games/casino.css`
+  so blackjack, roulette, Ride the Bus, and Cases stay visually aligned.
 
 ## Known residual
 

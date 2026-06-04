@@ -1,14 +1,13 @@
 /* eslint-disable react-hooks/refs */
 import { useEffect, useRef, useState } from 'react'
 import { BackButton } from '../../components/BackButton'
+import { CasinoCard } from '../../components/CasinoCard'
 import { DemoBankrollToggle } from '../../components/DemoBankrollToggle'
 import { useAuth } from '../../lib/auth'
 import { fetchProfile } from '../../lib/profile'
 import { supabase } from '../../lib/supabase'
 import {
   abbrev,
-  cardValue,
-  colorOf,
   draw,
   isCorrectGuess,
   newDeck,
@@ -22,6 +21,7 @@ import {
   type Suit,
 } from './lib'
 import './styles.css'
+import '../casino.css'
 
 type Phase = 'betting' | 'guessing' | 'revealed' | 'settled'
 
@@ -47,16 +47,8 @@ function roundTitle(round: RoundId): string {
   }
 }
 
-function CardView({ card, hidden = false }: { card?: Card; hidden?: boolean }) {
-  if (hidden || !card) return <div className="rtb-card is-back" aria-label="Face-down card" />
-  const red = colorOf(card) === 'red'
-  return (
-    <div className={`rtb-card ${red ? 'is-red' : 'is-black'}`} aria-label={`${card.rank} of ${card.suit}`}>
-      <span className="rtb-card-rank">{card.rank}</span>
-      <span className="rtb-card-suit">{SUIT_LABEL[card.suit][0]}</span>
-      <span className="rtb-card-value">{cardValue(card)}</span>
-    </div>
-  )
+function CardView({ card, hidden = false, index = 0 }: { card?: Card; hidden?: boolean; index?: number }) {
+  return <CasinoCard card={card} faceDown={hidden || !card} index={index} className="rtb-card" />
 }
 
 export function RideBusGame() {
@@ -281,6 +273,7 @@ export function RideBusGame() {
                 <CardView
                   key={index}
                   card={cards[index]}
+                  index={index}
                   hidden={phase !== 'betting' && index === cards.length && phase === 'guessing'}
                 />
               ))}
@@ -322,7 +315,7 @@ export function RideBusGame() {
                   <button
                     key={chip}
                     type="button"
-                    className={`rtb-chip chip-${chip}`}
+                    className={`rtb-chip casino-chip chip-${chip}`}
                     onClick={() => addChip(chip)}
                     disabled={wager + chip > balance}
                     aria-label={`Add ${chip} chip`}

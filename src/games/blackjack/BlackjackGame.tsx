@@ -21,6 +21,7 @@ import {
   type SettledHand,
 } from './lib'
 import './styles.css'
+import '../casino.css'
 
 type Phase = 'betting' | 'player_turn' | 'dealer_reveal' | 'settled'
 
@@ -555,7 +556,7 @@ function BetControls({
         {CHIPS.map((c) => (
           <button
             key={c}
-            className={`bj-chip chip-${c}`}
+            className={`bj-chip casino-chip chip-${c}`}
             onClick={() => addChip(c)}
             disabled={bet + c > balance}
             aria-label={`Add ${c} chip`}

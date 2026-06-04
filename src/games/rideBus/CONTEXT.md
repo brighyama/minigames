@@ -20,9 +20,9 @@ Schedule 1-inspired casino card game.
 
 | File | Role |
 | --- | --- |
-| `RideBusGame.tsx` | UI, round flow, demo bankroll, live stake/settle RPC wiring. |
+| `RideBusGame.tsx` | UI, round flow, demo bankroll, live stake/settle RPC wiring; card faces use shared `components/CasinoCard.tsx`. |
 | `lib.ts` | Pure card/deck/guess logic, rank values, multipliers. |
-| `styles.css` | Table, cards, chips, HUD, action controls. |
+| `styles.css` / `../casino.css` | Table, HUD, action controls + shared casino card/chip surfaces. |
 
 ## Backend
 

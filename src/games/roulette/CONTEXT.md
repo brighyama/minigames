@@ -21,7 +21,7 @@ leaderboard framework, conventions).
 | `RouletteWheel.tsx` | Canvas wheel + ball physics; imperative `spinTo(n)` lands the ball in pocket n. |
 | `RouletteTable.tsx` | European felt: 0 + 3×12 grid, columns/dozens/even-money. Chip placement. |
 | `lib.ts` | Wheel order, `colorOf`, bet defs (covers + payout), `settleRound`, abbrev. |
-| `styles.css` | Table/wheel styles. |
+| `styles.css` / `../casino.css` | Table/wheel styles + shared casino chip surfaces. |
 
 ## Backend — server-authoritative
 

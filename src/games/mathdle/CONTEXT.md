@@ -11,7 +11,7 @@ Daily 8-slot arithmetic puzzle inspired by classic Nerdle.
 - Multi-digit numbers cannot start with `0`; unary negative numbers and parentheses are not supported.
 - Tile feedback is duplicate-aware:
   - green = correct character and slot
-  - purple = character exists elsewhere
+  - yellow = character exists elsewhere
   - gray = absent
 
 ## Daily generation

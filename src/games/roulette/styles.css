@@ -58,7 +58,7 @@
   min-width: 28px;
   height: 28px;
   padding: 0 6px;
-  font-family: var(--mono);
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: 14px;
   font-weight: 700;
@@ -132,7 +132,7 @@
 }
 
 .rl-result-net {
-  font-family: var(--mono);
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: 40px;
   font-weight: 700;
@@ -170,7 +170,7 @@
   padding: 7px 14px;
   background: rgba(0, 0, 0, 0.4);
   clip-path: var(--shape-octagon-sm);
-  font-family: var(--mono);
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   color: #ffffff;
 }
@@ -211,7 +211,7 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -319,7 +319,7 @@
   height: 54px;
   border-radius: 50%;
   border: 4px dashed rgba(255, 255, 255, 0.55);
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 800;
   color: #ffffff;
@@ -369,7 +369,7 @@
 
 .rl-btn {
   padding: 10px 22px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.16em;

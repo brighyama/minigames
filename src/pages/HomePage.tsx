@@ -74,7 +74,7 @@ const games: Game[] = [
     name: 'mathdle',
     tagline: 'daily equation puzzle',
     path: '/games/mathdle',
-    gradient: 'linear-gradient(135deg, #16a34a 0%, #7c3aed 44%, #111827 100%)',
+    gradient: 'linear-gradient(135deg, #0ea5e9 0%, #facc15 48%, #1f2937 100%)',
   },
   {
     id: 'chess',
@@ -88,7 +88,7 @@ const games: Game[] = [
     name: 'minesweeper',
     tagline: 'clear the field',
     path: '/games/minesweeper',
-    gradient: 'linear-gradient(135deg, #db3924 0%, #7e2f2f 55%, #471717 100%)',
+    gradient: 'linear-gradient(135deg, #2d5de2 0%, #7e2f2f 55%, #471717 100%)',
   },
 ]
 

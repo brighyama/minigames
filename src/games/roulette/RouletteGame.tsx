@@ -15,6 +15,7 @@ import {
   type RoundResult,
 } from './lib'
 import './styles.css'
+import '../casino.css'
 
 type Phase = 'betting' | 'spinning' | 'result'
 
@@ -330,7 +331,7 @@ export function RouletteGame() {
               <button
                 key={c}
                 type="button"
-                className={`rl-chip chip-${c} ${selectedChip === c ? 'is-selected' : ''}`}
+                className={`rl-chip casino-chip chip-${c} ${selectedChip === c ? 'is-selected' : ''}`}
                 onClick={() => setSelectedChip(c)}
                 disabled={c > balance && selectedChip !== c}
                 aria-pressed={selectedChip === c}

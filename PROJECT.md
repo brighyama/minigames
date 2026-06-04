@@ -158,6 +158,15 @@ The goal is that **every game looks like part of the same site** under whatever 
   - `--g2048-bg-*/--g2048-fg-*` — 2048 tile palette (`applyTilePalette`).
   - `--chess-light/dark/hint/capture` — chess board (`applyChessPalette`).
   - `--card-*` — blackjack card deck (from the active card deck).
+- **Typography roles.** Font families are shared through semantic CSS vars in
+  `src/index.css`: `--font-body`, `--font-display`, `--font-ui`,
+  `--font-number`, `--font-card`, `--font-symbol`, and `--font-mono`.
+  Themes may change `--theme-font`, but games/pages should use these role vars
+  instead of hard-coded stacks or one-off `--theme-font` references.
+  Matching text types should use matching roles everywhere: page/game titles
+  use `--font-display`, buttons and controls use `--font-ui`, counters/HUDs/
+  board glyphs use `--font-number`, playing cards use `--font-card`, chess
+  pieces use `--font-symbol`, and literal code uses `--font-mono`.
 - **Default vs unlockable themes.** The 3 default themes generally fall back to each game's classic/neutral colors; unlockable themes get bespoke per-game palettes. Tetris is the exception: its pieces keep constant colors across all themes (readability is a gameplay requirement) and theme only via the board chrome — see `tetris/CONTEXT.md`.
 
 ### Rarity glow (themes + card decks)
@@ -170,9 +179,30 @@ The goal is that **every game looks like part of the same site** under whatever 
 ### Card decks
 
 - Defined in [src/lib/cardDecks.ts](src/lib/cardDecks.ts) — `CardDeck` type + `cardDecks` array (first = default, always unlocked).
-- Active deck writes `--card-face`, `--card-red`, `--card-black`, `--card-back`, `--card-border`, `--card-font` on `:root` from [App.tsx](src/App.tsx). Blackjack's `Card.tsx` consumes them, so a deck change reskins cards live.
+- Active deck writes `--card-face`, `--card-red`, `--card-black`, `--card-back`, `--card-border`, `--card-font` on `:root` from [App.tsx](src/App.tsx). Shared casino cards consume them, so a deck change reskins cards live.
 - Selector lives in the sidebar (below Theme). Locked decks auto-appear in the Shop "Card decks" section. Decks: **Classic** (free), **Mono** (green), **Neon** (purple), **Royal** (red).
 - NOTE: deck choice is **localStorage-only** (`minigames:deck`) — no `deck_id` profile column yet, so it doesn't sync across devices.
+
+### Shared casino UI
+
+Casino games should feel like one table system, not four separate visual
+experiments.
+
+- **Cards:** use [components/CasinoCard.tsx](src/components/CasinoCard.tsx)
+  for any standard playing-card face/back. It renders the shared blackjack-style
+  layout (rank/suit corners + centered suit glyph), reads the active deck CSS
+  vars (`--card-*`), and uses the `--font-card` typography role. Do not redraw
+  suit symbols or make a local card face unless the game truly is not using
+  standard cards.
+- **Chips:** use [src/games/casino.css](src/games/casino.css) and add
+  `.casino-chip chip-10|25|100|500|1000` to wager chips. The chip set is fixed
+  across casino games: **10 / 25 / 100 / 500 / 1,000**, rarity-colored
+  green/blue/purple/red/gold, 56px circular dashed chips, and `--font-number`.
+  Roulette placed-bet markers use `.casino-chip-mini` so they are the same chip
+  language scaled down.
+- **Demo/live controls:** use [components/DemoBankrollToggle.tsx](src/components/DemoBankrollToggle.tsx)
+  for casino demo bankroll state, and keep live/demo branches separate as
+  described below.
 
 ### Selected-cosmetic indicator
 
@@ -338,8 +368,9 @@ After running, sign out + back in to refresh client state (or rely on the existi
 2. Add a `<Route path="/games/<id>" element={<GameName … />}>` in [src/App.tsx](src/App.tsx).
 3. Add an entry to the `games` array (or `casinoGames`) in [src/pages/HomePage.tsx](src/pages/HomePage.tsx): `{ id, name, tagline, path: '/games/<id>', gradient }`. The home page lists games as compact monogram tiles (a small gradient chip with the name's first letter + a one-line tagline) — no per-game artwork needed.
 4. For per-game high scores: add a column on `profiles`, a write/award RPC, and a `get_leaderboard_<game>` RPC. Use the existing reaction/aim/2048/tetris ones as templates — **the RPC must compute any points reward itself and bound it** (never accept a client-supplied amount), and validate score plausibility. Then add a `fetch<Game>Leaderboard` helper in [src/lib/leaderboards.ts](src/lib/leaderboards.ts) and a `<Leaderboard>` card in [src/pages/LeaderboardsPage.tsx](src/pages/LeaderboardsPage.tsx).
-5. For theme integration, drive game colors from `:root` CSS vars set in the App.tsx theme effect, and use the shared `--shape-*` clip-paths instead of `border-radius`.
-6. Add the game to the [Games index](#games-index) table above.
+5. For theme integration, drive game colors from `:root` CSS vars set in the App.tsx theme effect, use the shared `--shape-*` clip-paths instead of `border-radius`, and use the typography role vars from [Typography roles](#unified-theming-across-games) instead of local font stacks.
+6. If the game is a casino game, reuse the [Shared casino UI](#shared-casino-ui): `CasinoCard` for standard cards, `.casino-chip` for wager chips, and `DemoBankrollToggle` for demo mode. Do not create local card/chip designs unless the new game has a clearly different non-standard object.
+7. Add the game to the [Games index](#games-index) table above.
 
 ### Restyle a game's home-page tile
 
@@ -356,6 +387,7 @@ Add a second `<section className="shop-section">` to [src/pages/ShopPage.tsx](sr
 Game-specific gotchas live in each game's `CONTEXT.md`. These apply site-wide:
 
 - **No `border-radius`.** All chamfered/octagonal corners come from `clip-path: var(--shape-…)` defined at the top of [App.css](src/App.css). Borders are faked with a colored outer background + a slightly-inset (`::before`) inner layer with the same clip-path.
+- **Use shared font roles.** New pages/games should use `--font-body`, `--font-display`, `--font-ui`, `--font-number`, `--font-card`, `--font-symbol`, or `--font-mono`; themes change `--theme-font` centrally. Avoid hard-coded font stacks in game CSS.
 - **High scores save the instant they're set**, not on unmount. Fire-and-forget RPCs from cleanup functions get killed by route navigation, so save in the result-phase effect. Only session-wide-dependent point awards stay in unmount.
 - **`saveProfile` writes are explicit.** Avoid `useEffect`s that auto-save on every change — they cause re-save loops with the hydration effect. `selectTheme`/`addUnlock` call `saveProfile` directly only in response to user actions.
 - **`saveProfile` uses UPDATE, not UPSERT.** An upsert compiles to `INSERT … ON CONFLICT DO UPDATE SET …` that includes `user_id` in the SET clause, but `hardening.sql` grants column-level UPDATE only on the cosmetic columns (not `user_id`) — so an upsert fails with *"permission denied for table profiles"*. `saveProfile` updates the existing row (created by the `handle_new_user` trigger) and only falls back to insert if no row matched. Don't switch it back to `.upsert()`.
@@ -363,5 +395,6 @@ Game-specific gotchas live in each game's `CONTEXT.md`. These apply site-wide:
 - **Don't put points/daily/shop on non-home routes.** App.tsx gates the top-right cluster with `useLocation()`/`isHome`.
 - **The economy is server-guarded (post-hardening) — keep it that way.** No client-callable "add N points" RPC; every reward is computed and bounded server-side. When adding features, **never** grant a function that takes a client-supplied point amount, and never grant column UPDATE on economic columns.
 - **Casino demo bankroll is session-only.** Keep demo casino state local to the game component. Do not persist it, dispatch `points-changed`, call casino RPCs, or unlock cosmetics while demo mode is active.
+- **Casino cards/chips are shared.** Casino card games use `CasinoCard`; wager controls use `.casino-chip` from `src/games/casino.css`. Keep card suits, card backs, chip colors, chip font, and chip sizing consistent across blackjack, roulette, Ride the Bus, Cases, and future casino games.
 - **Exit/back is universal.** All non-home pages use [components/BackButton.tsx](src/components/BackButton.tsx) (fixed top-center). Don't reintroduce per-game corner exit buttons.
 - **StrictMode-safety.** Several games run effects that fire RPCs; guard them against StrictMode's double-invoke (one-submit refs, round-id guards). See the relevant game's CONTEXT.md.

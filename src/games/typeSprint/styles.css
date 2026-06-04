@@ -4,7 +4,7 @@
   justify-content: center;
   min-height: 100svh;
   padding: 88px 24px 42px;
-  font-family: var(--theme-font, var(--sans));
+  font-family: var(--font-body);
 }
 
 .type-sprint-shell {
@@ -71,7 +71,7 @@
 
 .type-sprint-mode strong,
 .type-sprint-stat strong {
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: 20px;
   line-height: 1;
@@ -82,7 +82,7 @@
   min-width: 94px;
   padding: 9px 15px;
   text-align: center;
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: 24px;
   font-weight: 800;
@@ -112,7 +112,7 @@
   overflow: hidden;
   padding: 2px 4px 14px;
   outline: none;
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-size: clamp(24px, 3.3vw, 40px);
   font-variant-numeric: tabular-nums;
   font-weight: 650;
@@ -206,7 +206,7 @@
 }
 
 .type-sprint-result-score span {
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: clamp(58px, 9vw, 84px);
   font-weight: 850;
@@ -244,7 +244,7 @@
 
 .type-sprint-result-grid strong {
   color: #ffffff;
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   font-size: 16px;
   letter-spacing: 0;

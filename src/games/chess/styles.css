@@ -269,7 +269,7 @@
 }
 
 .chess-piece-glyph text {
-  font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Apple Symbols', 'Symbola', sans-serif;
+  font-family: var(--font-symbol);
   font-size: 56px;
 }
 

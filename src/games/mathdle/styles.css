@@ -85,7 +85,7 @@
   background: var(--board-cell-empty, rgba(255, 255, 255, 0.04));
   box-shadow: 0 0 0 2px var(--board-grid, rgba(255, 255, 255, 0.12)) inset;
   clip-path: var(--shape-octagon-sm);
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-size: clamp(1.1rem, 5.2vw, 2rem);
   font-weight: 850;
   line-height: 1;
@@ -98,7 +98,7 @@
 }
 
 .mathdle-tile.is-correct { background: #2e7d46; box-shadow: none; }
-.mathdle-tile.is-present { background: #7c5bc5; box-shadow: none; }
+.mathdle-tile.is-present { background: #b59230; box-shadow: none; }
 .mathdle-tile.is-absent  { background: #34343d; box-shadow: none; }
 .mathdle-tile.is-revealed { animation: mathdle-flip 480ms ease forwards; }
 
@@ -167,7 +167,7 @@
 .mathdle-key:active { transform: translateY(1px); }
 .mathdle-key:disabled { cursor: default; opacity: 0.85; }
 .mathdle-key.is-correct { background: #2e7d46; }
-.mathdle-key.is-present { background: #7c5bc5; }
+.mathdle-key.is-present { background: #b59230; }
 .mathdle-key.is-absent  { background: #25252c; color: rgba(255, 255, 255, 0.45); }
 
 .mathdle-overlay {
@@ -209,7 +209,7 @@
 .mathdle-result-answer strong,
 .mathdle-result-streak strong {
   color: var(--accent-2, #34e89e);
-  font-family: var(--theme-font, var(--mono));
+  font-family: var(--font-number);
   font-size: 1.2rem;
 }
 

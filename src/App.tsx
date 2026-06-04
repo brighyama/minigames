@@ -100,7 +100,7 @@ function App() {
     root.style.setProperty('--theme-bg', theme.background)
     root.style.setProperty('--theme-bg-size', theme.backgroundSize ?? 'auto')
     root.style.setProperty('--theme-text', theme.text ?? '#ffffff')
-    root.style.setProperty('--theme-font', theme.font ?? 'inherit')
+    root.style.setProperty('--theme-font', theme.font ?? 'var(--sans)')
     root.style.setProperty(
       '--theme-title-shadow',
       theme.titleShadow ?? '0 8px 32px rgba(0, 0, 0, 0.3)',

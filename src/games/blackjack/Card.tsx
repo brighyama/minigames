@@ -1,11 +1,5 @@
-import type { Card as CardT, Suit } from './lib'
-
-const SUIT_GLYPH: Record<Suit, string> = {
-  spades: '♠',
-  hearts: '♥',
-  diamonds: '♦',
-  clubs: '♣',
-}
+import { CasinoCard } from '../../components/CasinoCard'
+import type { Card as CardT } from './lib'
 
 type Props = {
   card?: CardT
@@ -16,31 +10,5 @@ type Props = {
 }
 
 export function Card({ card, faceDown, index = 0 }: Props) {
-  if (faceDown || !card) {
-    return (
-      <div
-        className="bj-card is-back"
-        style={{ animationDelay: `${index * 60}ms` }}
-        aria-label="Face-down card"
-      />
-    )
-  }
-  const isRed = card.suit === 'hearts' || card.suit === 'diamonds'
-  return (
-    <div
-      className={`bj-card ${isRed ? 'is-red' : 'is-black'}`}
-      style={{ animationDelay: `${index * 60}ms` }}
-      aria-label={`${card.rank} of ${card.suit}`}
-    >
-      <div className="bj-card-corner top">
-        <span className="bj-card-rank">{card.rank}</span>
-        <span className="bj-card-suit">{SUIT_GLYPH[card.suit]}</span>
-      </div>
-      <div className="bj-card-center">{SUIT_GLYPH[card.suit]}</div>
-      <div className="bj-card-corner bottom">
-        <span className="bj-card-rank">{card.rank}</span>
-        <span className="bj-card-suit">{SUIT_GLYPH[card.suit]}</span>
-      </div>
-    </div>
-  )
+  return <CasinoCard card={card} faceDown={faceDown} index={index} className="bj-card" />
 }

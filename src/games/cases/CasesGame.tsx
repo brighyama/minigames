@@ -22,6 +22,7 @@ import {
   type CaseItem,
 } from './lib'
 import './styles.css'
+import '../casino.css'
 
 type Phase = 'idle' | 'spinning' | 'result'
 
@@ -346,7 +347,7 @@ export function CasesGame({ onUnlock }: Props) {
             <button
               key={c}
               type="button"
-              className={`cases-chip chip-${c}`}
+              className={`cases-chip casino-chip chip-${c}`}
               onClick={() => addChip(c)}
               disabled={spinning || c > balance}
               aria-label={`Add ${c} chip`}
