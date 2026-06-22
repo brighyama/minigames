@@ -85,7 +85,7 @@ src/
     typeSprint/               20-second Monkeytype-style typing test.     → typeSprint/CONTEXT.md
     mathdle/                  Daily 8-slot arithmetic equation puzzle.    → mathdle/CONTEXT.md
     g2048/                    Classic 2048 + swappable AI solver.        → g2048/CONTEXT.md
-    tetris/                   TETR.IO-style Sprint 40L (canvas).         → tetris/CONTEXT.md
+    tetris/                   Sprint 40L + local bot versus (canvas).    → tetris/CONTEXT.md
     wordle/                   Date-seeded daily 5-letter word game.      → wordle/CONTEXT.md
     blackjack/                6-deck blackjack, escrowed economy.        → blackjack/CONTEXT.md
     roulette/                 European roulette, server-authoritative.   → roulette/CONTEXT.md
@@ -108,7 +108,7 @@ src/
 | Type Sprint | `/games/type-sprint` | `typeSprint/` | 20-second WPM / accuracy | none (local best only) |
 | Mathdle | `/games/mathdle` | `mathdle/` | Daily solve streak / local stats | none (local daily only) |
 | 2048 | `/games/2048` | `g2048/` | Highest tile reached | `submit_2048_result` |
-| Tetris | `/games/tetris` | `tetris/` | Fastest 40-line sprint (ms) | `submit_tetris_result` |
+| Tetris | `/games/tetris`, `/games/tetris-versus` | `tetris/` | Fastest 40-line sprint (ms); versus is local-only | `submit_tetris_result` |
 | Daily Word | `/games/wordle` | `wordle/` | Best daily solve streak | `submit_wordle_result` |
 | Blackjack | `/games/blackjack` | `blackjack/` | Casino net / biggest win | `blackjack_deal_stake`/`add_stake`/`settle` |
 | Roulette | `/games/roulette` | `roulette/` | Casino net / biggest win | `roulette_spin` (server-authoritative) |

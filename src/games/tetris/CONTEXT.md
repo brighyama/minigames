@@ -1,13 +1,19 @@
 # Tetris — game context
 
-A TETR.IO-style **Sprint** (clear 40 lines as fast as possible). Canvas-rendered
-with guideline mechanics. See [PROJECT.md](../../../PROJECT.md) for site-wide
-architecture (theming, economy, leaderboard framework, conventions).
+A TETR.IO-style Tetris implementation with **Sprint** (clear 40 lines as fast
+as possible) and **Versus Bot** modes. Both are canvas-rendered with guideline
+mechanics. See [PROJECT.md](../../../PROJECT.md) for site-wide architecture
+(theming, economy, leaderboard framework, conventions).
 
 ## Gameplay
 
 - **Sprint 40L:** clear 40 lines; fastest time wins. A 3-2-1 countdown precedes
   each run; the timer starts on "go".
+- **Versus Bot:** first top-out loses. Line clears send garbage to the opponent;
+  outgoing attack first cancels the player's queued incoming garbage. Garbage
+  arrives after a short delay and rises after a non-clearing lock, capped at 8
+  rows per lock. Four bot strengths (Rookie, Steady, Fast, Expert) change its
+  placement error rate and pieces-per-second, not the battle rules.
 - 10×20 visible playfield with a hidden spawn buffer above (the board is
   internally `WIDTH=10 × HEIGHT=40`, `VISIBLE=20`; pieces spawn in the buffer
   and fall into view).
@@ -82,6 +88,8 @@ architecture (theming, economy, leaderboard framework, conventions).
 | --- | --- |
 | `lib.ts` | Pure engine: tetromino shapes, SRS rotation + kick tables, 7-bag (`SevenBag`), board ops, `collides`/`tryMove`/`tryRotate`/`hardDropPosition`/`lockPiece`/`clearLines`, `detectTSpin`, combo/B2B helpers. No React/Supabase. |
 | `TetrisGame.tsx` | Canvas renderer + fixed-timestep game loop, input handling, hold/next/ghost, Sprint logic, HUD, overlays, and juice. |
+| `TetrisVersusGame.tsx` | Two-board battle loop, player controls, bot cadence, garbage queues/cancellation, match HUD, and win/loss flow. |
+| `versus.ts` | Pure versus helpers: attack table, garbage insertion, bot difficulties, legal placement enumeration, and board evaluator. |
 | `palette.ts` | Constant per-piece colors (`PIECE_COLORS`/`PIECE_HIGHLIGHTS`) + `typeForId`. |
 | `settings.ts` | Pure: handling/keybind types + defaults, localStorage load/save (clamped), `buildCodeMap`/`assignKey`/`clearKey`, `keyLabel`. No React. |
 | `TetrisSettings.tsx` | The settings modal (handling sliders + rebindable keybinds + reset). |
@@ -117,6 +125,8 @@ architecture (theming, economy, leaderboard framework, conventions).
   column grant), so only the RPC can write it.
 - **Leaderboard:** "Tetris Sprint" via `get_leaderboard_tetris`, ranks by
   ascending time, formatted as `M:SS.cc` / `SS.ccs`.
+- **Versus is local-only:** bot matches do not submit scores, award points, or
+  affect the Sprint leaderboard.
 
 ## Theming
 
@@ -143,11 +153,22 @@ architecture (theming, economy, leaderboard framework, conventions).
   *horizontal* move. Hard drop and gravity do NOT clear it, so "rotate into the
   slot, then hard drop" still registers as a T-spin.
 
+## Versus bot notes
+
+- Routes: Sprint is `/games/tetris`; Versus is `/games/tetris-versus`. Each mode
+  links to the other in its header and both have home-page tiles.
+- Attack table: double 1, triple 2, tetris 4; full T-spin single/double/triple
+  2/4/6; B2B difficult clears +1; combos ramp to +5; perfect clear +10.
+- The bot uses legal spawn/rotation/drop placements from the shared engine and
+  may use hold. It gets no T-spin attack credit because its placement is
+  selected atomically rather than performed as an input sequence.
+- Bot difficulty persists in `minigames:tetris:versus-difficulty`. Shared
+  handling and keybind settings use the same storage as Sprint.
+
 ## Not implemented (extension ideas)
 
 - Other modes (Blitz score-attack, Marathon, Zen) — would need a mode selector
   and a decision on which single metric the leaderboard tracks.
-- A watchable bot (mirror 2048's "Watch AI"); if added, it needs an
-  `aiUsedRef`-style taint guard so bot runs are never ranked/rewarded.
+- Online multiplayer / matchmaking.
 - Sound effects (the site currently has no audio).
 - Swipe/drag gesture input for mobile (currently on-screen buttons only).

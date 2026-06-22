@@ -49,6 +49,13 @@ const games: Game[] = [
     gradient: 'linear-gradient(135deg, #22d3d3 0%, #b15bd8 45%, #f59331 100%)',
   },
   {
+    id: 'tetris-versus',
+    name: 'tetris versus',
+    tagline: 'battle a bot with garbage',
+    path: '/games/tetris-versus',
+    gradient: 'linear-gradient(135deg, #ef4444 0%, #b15bd8 48%, #22d3d3 100%)',
+  },
+  {
     id: 'pattern',
     name: 'memory matrix',
     tagline: 'visual memory game',

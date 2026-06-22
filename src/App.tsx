@@ -25,6 +25,7 @@ import { Game2048 } from './games/g2048/Game2048'
 import { ChessGame } from './games/chess/ChessGame'
 import { applyChessPalette } from './games/chess/palette'
 import { TetrisGame } from './games/tetris/TetrisGame'
+import { TetrisVersusGame } from './games/tetris/TetrisVersusGame'
 import { MinesweeperGame } from './games/minesweeper/MinesweeperGame'
 import { CasesGame } from './games/cases/CasesGame'
 import { PatternGame } from './games/pattern/PatternGame'
@@ -441,6 +442,7 @@ function App() {
         <Route path="/games/aim" element={<AimGame rarity={theme.rarity} />} />
         <Route path="/games/2048" element={<Game2048 />} />
         <Route path="/games/tetris" element={<TetrisGame />} />
+        <Route path="/games/tetris-versus" element={<TetrisVersusGame />} />
         <Route path="/games/pattern" element={<PatternGame />} />
         <Route path="/games/color-match" element={<ColorMatchGame />} />
         <Route path="/games/type-sprint" element={<TypeSprintGame />} />

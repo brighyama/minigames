@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import { fetchProfile } from '../../lib/profile'
@@ -765,6 +766,7 @@ export function TetrisGame() {
       <div className="tetris-header">
         <h1 className="tetris-title">tetris</h1>
         <span className="tetris-mode">sprint · 40 lines</span>
+        <Link className="tetris-mode-link" to="/games/tetris-versus">versus</Link>
         <button
           className="tetris-gear"
           onClick={() => setSettingsOpen(true)}
