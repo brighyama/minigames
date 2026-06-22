@@ -56,6 +56,20 @@ const games: Game[] = [
     gradient: 'linear-gradient(135deg, #ef4444 0%, #b15bd8 48%, #22d3d3 100%)',
   },
   {
+    id: 'higher-lower',
+    name: 'higher or lower',
+    tagline: 'compare searches, ratings, prices, and more',
+    path: '/games/higher-lower',
+    gradient: 'linear-gradient(135deg, #16a34a 0%, #f8fafc 49%, #dc2626 51%, #7f1d1d 100%)',
+  },
+  {
+    id: 'snake',
+    name: 'snake',
+    tagline: 'classic, wrap, rush, and maze modes',
+    path: '/games/snake',
+    gradient: 'linear-gradient(135deg, #34e89e 0%, #15803d 52%, #172554 100%)',
+  },
+  {
     id: 'pattern',
     name: 'memory matrix',
     tagline: 'visual memory game',

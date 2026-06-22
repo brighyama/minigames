@@ -32,6 +32,8 @@ import { PatternGame } from './games/pattern/PatternGame'
 import { ColorMatchGame } from './games/colorMatch/ColorMatchGame'
 import { TypeSprintGame } from './games/typeSprint/TypeSprintGame'
 import { MathdleGame } from './games/mathdle/MathdleGame'
+import { HigherLowerGame } from './games/higherLower/HigherLowerGame'
+import { SnakeGame } from './games/snake/SnakeGame'
 // Lazy-loaded: its ~12.5k-word guess dictionary (allowed.ts) is split into its
 // own chunk so it only downloads when a player opens Daily Word.
 const WordleGame = lazy(() =>
@@ -447,6 +449,8 @@ function App() {
         <Route path="/games/color-match" element={<ColorMatchGame />} />
         <Route path="/games/type-sprint" element={<TypeSprintGame />} />
         <Route path="/games/mathdle" element={<MathdleGame />} />
+        <Route path="/games/higher-lower" element={<HigherLowerGame />} />
+        <Route path="/games/snake" element={<SnakeGame />} />
         <Route path="/games/minesweeper" element={<MinesweeperGame />} />
         <Route path="/games/wordle" element={<WordleGame />} />
         <Route path="/games/chess" element={<ChessGame />} />
