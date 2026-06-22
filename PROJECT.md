@@ -87,7 +87,6 @@ src/
     g2048/                    Classic 2048 + swappable AI solver.        → g2048/CONTEXT.md
     tetris/                   Sprint 40L + local bot versus (canvas).    → tetris/CONTEXT.md
     higherLower/              Category-based Higher or Lower.           → higherLower/CONTEXT.md
-    snake/                    Multi-mode canvas Snake.                   → snake/CONTEXT.md
     wordle/                   Date-seeded daily 5-letter word game.      → wordle/CONTEXT.md
     blackjack/                6-deck blackjack, escrowed economy.        → blackjack/CONTEXT.md
     roulette/                 European roulette, server-authoritative.   → roulette/CONTEXT.md
@@ -112,7 +111,6 @@ src/
 | 2048 | `/games/2048` | `g2048/` | Highest tile reached | `submit_2048_result` |
 | Tetris | `/games/tetris`, `/games/tetris-versus` | `tetris/` | Fastest 40-line sprint (ms); versus is local-only | `submit_tetris_result` |
 | Higher or Lower | `/games/higher-lower` | `higherLower/` | Best streak per category (local) | none |
-| Snake | `/games/snake` | `snake/` | Best score per mode/difficulty (local) | none |
 | Daily Word | `/games/wordle` | `wordle/` | Best daily solve streak | `submit_wordle_result` |
 | Blackjack | `/games/blackjack` | `blackjack/` | Casino net / biggest win | `blackjack_deal_stake`/`add_stake`/`settle` |
 | Roulette | `/games/roulette` | `roulette/` | Casino net / biggest win | `roulette_spin` (server-authoritative) |

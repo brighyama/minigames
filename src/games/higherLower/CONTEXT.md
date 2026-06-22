@@ -32,6 +32,7 @@ does not change halfway through a run.
 | File | Role |
 | --- | --- |
 | `data.ts` | Category metadata, formatting, snapshot notes, and curated items. |
+| `images.ts` | On-demand image resolver and URL cache: Wikimedia summary images for general categories and selected open CSGO-API/Steam CDN URLs for CS2 renders. |
 | `HigherLowerGame.tsx` | Category picker, shuffled run state, guessing/reveal flow, keyboard input, and local bests. |
 | `styles.css` | Split-card arena, category picker, responsive stacked layout, and theme-aware chrome. |
 
@@ -39,7 +40,22 @@ does not change halfway through a run.
 
 - Last category: `minigames:higher-lower:category`
 - Best streak map: `minigames:higher-lower:bests`
+- Resolved remote image URLs: `minigames:higher-lower:image-cache:v1`
 - No Supabase writes, points, or leaderboard.
+
+## Images
+
+- Images are resolved lazily for the visible and next few cards rather than
+  bundled into the app. General entities use Wikimedia article-summary image
+  metadata. CS2 skin URLs were selected from the MIT-licensed
+  [ByMykel/CSGO-API](https://github.com/ByMykel/CSGO-API) index and load directly
+  from Steam's image CDN, avoiding a multi-megabyte index download at runtime.
+- Resolved URLs are cached in memory and localStorage. The item's original
+  gradient and symbol remain underneath as loading/error fallbacks.
+- This avoids manually importing every image, but it introduces a network
+  dependency. If a future deployment requires fully deterministic/offline
+  assets, download selected images into `public/games/higher-lower/` and replace
+  the resolver with local URLs.
 
 ## Theming
 

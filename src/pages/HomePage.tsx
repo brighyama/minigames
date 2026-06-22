@@ -63,13 +63,6 @@ const games: Game[] = [
     gradient: 'linear-gradient(135deg, #16a34a 0%, #f8fafc 49%, #dc2626 51%, #7f1d1d 100%)',
   },
   {
-    id: 'snake',
-    name: 'snake',
-    tagline: 'classic, wrap, rush, and maze modes',
-    path: '/games/snake',
-    gradient: 'linear-gradient(135deg, #34e89e 0%, #15803d 52%, #172554 100%)',
-  },
-  {
     id: 'pattern',
     name: 'memory matrix',
     tagline: 'visual memory game',

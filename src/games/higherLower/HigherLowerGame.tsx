@@ -6,6 +6,7 @@ import {
   type HigherLowerCategoryId,
   type HigherLowerItem,
 } from './data'
+import { cachedItemImage, resolveItemImage } from './images'
 import './styles.css'
 
 type Guess = 'higher' | 'lower'
@@ -165,6 +166,16 @@ export function HigherLowerGame() {
     return () => window.removeEventListener('keydown', onKey)
   }, [categoryId, guess, startCategory])
 
+  // Warm the next few images while the player is deciding. Resolution is
+  // cached, so revisiting an item is instant and does not repeat API calls.
+  useEffect(() => {
+    if (!categoryId || deck.length === 0) return
+    for (let offset = 0; offset < 4; offset++) {
+      const item = deck[(rightIndex + offset) % deck.length]
+      if (item) void resolveItemImage(categoryId, item)
+    }
+  }, [categoryId, deck, rightIndex])
+
   if (!category || !left || !right) {
     return (
       <main className="hl-container">
@@ -218,11 +229,16 @@ export function HigherLowerGame() {
       </header>
 
       <section className={`hl-arena phase-${phase} ${lastCorrect === true ? 'is-correct' : ''} ${lastCorrect === false ? 'is-wrong' : ''}`}>
-        <ItemPanel item={left} known category={category} />
+        <ItemPanel key={`left:${category.id}:${left.id}`} item={left} known category={category} />
 
         <div className="hl-versus" aria-hidden="true">vs</div>
 
-        <ItemPanel item={right} known={phase !== 'guessing'} category={category}>
+        <ItemPanel
+          key={`right:${category.id}:${right.id}`}
+          item={right}
+          known={phase !== 'guessing'}
+          category={category}
+        >
           {phase === 'guessing' && (
             <div className="hl-guess-controls">
               <span className="hl-guess-prompt">has {category.question}</span>
@@ -279,8 +295,34 @@ function ItemPanel({
   category: ReturnType<typeof categoryById>
   children?: React.ReactNode
 }) {
+  const [imageSource, setImageSource] = useState<string | null | undefined>(() =>
+    cachedItemImage(category.id, item),
+  )
+
+  useEffect(() => {
+    let active = true
+    void resolveItemImage(category.id, item).then((source) => {
+      if (active) setImageSource(source)
+    })
+    return () => {
+      active = false
+    }
+  }, [category.id, item])
+
   return (
-    <article className="hl-item" style={{ background: item.gradient }}>
+    <article
+      className={`hl-item category-${category.id}${imageSource ? ' has-image' : ''}`}
+      style={{ background: item.gradient }}
+    >
+      {imageSource && (
+        <img
+          className="hl-item-image"
+          src={imageSource}
+          alt=""
+          referrerPolicy="no-referrer"
+          onError={() => setImageSource(null)}
+        />
+      )}
       <div className="hl-item-pattern" aria-hidden="true">{item.symbol}</div>
       <div className="hl-item-shade" />
       <div className="hl-item-content">
